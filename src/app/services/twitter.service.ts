@@ -20,11 +20,18 @@ interface TwitterTweet {
   };
 }
 
+interface TwitterMediaVariant {
+  bit_rate?: number;
+  content_type: string;
+  url: string;
+}
+
 interface TwitterMedia {
   media_key: string;
   type: string;
   url?: string;
   preview_image_url?: string;
+  variants?: TwitterMediaVariant[];
 }
 
 interface TwitterResponse {
@@ -61,7 +68,14 @@ export class TwitterService {
    * Fetch tweets from a user within the time window
    */
   async fetchTweets(feed: Feed, hoursAgo: number = 48): Promise<FeedItem[]> {
-    const username = feed.url.replace('@', '');
+    // Extract username from URL or handle
+    let username = feed.url.replace('@', '').trim();
+
+    // Handle full URLs like https://twitter.com/username or https://x.com/username
+    const urlMatch = username.match(/(?:twitter\.com|x\.com)\/([^\/\?]+)/i);
+    if (urlMatch) {
+      username = urlMatch[1];
+    }
 
     try {
       // Calculate start time for the query
@@ -122,7 +136,7 @@ export class TwitterService {
     const params = new URLSearchParams({
       'tweet.fields': 'created_at,author_id,attachments',
       'expansions': 'author_id,attachments.media_keys',
-      'media.fields': 'url,preview_image_url,type',
+      'media.fields': 'url,preview_image_url,type,variants',
       'user.fields': 'name,username',
       'start_time': startTime.toISOString(),
       'max_results': '100',
@@ -148,11 +162,30 @@ export class TwitterService {
       return response.data.map(tweet => {
         const author = users.get(tweet.author_id);
         const mediaUrls = tweet.attachments?.media_keys
-          ?.map(key => {
+          ?.flatMap(key => {
             const m = media.get(key);
-            return m?.url || m?.preview_image_url;
-          })
-          .filter((url): url is string => !!url);
+            if (!m) return [];
+
+            // For videos, add thumbnail first (for display), then MP4 (for playback)
+            if (m.type === 'video' && m.variants) {
+              const urls: string[] = [];
+              // Add thumbnail first for display in feed
+              if (m.preview_image_url) {
+                urls.push(m.preview_image_url);
+              }
+              // Add MP4 for playback
+              const mp4Variants = m.variants
+                .filter(v => v.content_type === 'video/mp4')
+                .sort((a, b) => (b.bit_rate || 0) - (a.bit_rate || 0));
+              if (mp4Variants.length > 0) {
+                urls.push(mp4Variants[0].url.replace('video.twimg.com', 'pbs.twimg.com'));
+              }
+              return urls;
+            }
+
+            // For images
+            return m.url ? [m.url] : [];
+          }) || [];
 
         return {
           id: `twitter_${tweet.id}`,

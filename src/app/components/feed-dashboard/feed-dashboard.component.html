@@ -35,6 +35,9 @@
       </button>
       @if (selectedCount() > 0) {
       <span class="selected-badge">{{ selectedCount() }} selected</span>
+      <button class="filter-btn" (click)="deleteSelected()" title="Delete selected items from cache">
+        🗑️
+      </button>
       }
       }
       <!-- Theme toggle always visible -->
@@ -48,9 +51,12 @@
   <!-- Content -->
   <div class="dashboard-content">
     @if (isLoading()) {
-    <div class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>{{ i18n.t.sidebar.syncing }}</p>
+    <div class="loading-state skeleton-list">
+      <app-skeleton-item></app-skeleton-item>
+      <app-skeleton-item></app-skeleton-item>
+      <app-skeleton-item></app-skeleton-item>
+      <app-skeleton-item></app-skeleton-item>
+      <app-skeleton-item></app-skeleton-item>
     </div>
     } @else if (error()) {
     <div class="error-state">
@@ -123,7 +129,7 @@
 
         @if (item.mediaUrls && item.mediaUrls.length > 0) {
         <div class="card-media">
-          <img [src]="item.mediaUrls[0]" alt="" class="media-thumbnail" />
+          <img appLazyImage [src]="item.mediaUrls[0]" alt="" class="media-thumbnail" />
           @if (item.mediaUrls.length > 1) {
           <span class="media-count">+{{ item.mediaUrls.length - 1 }}</span>
           }
@@ -132,9 +138,15 @@
 
         <div class="card-footer">
           <span class="author">{{ item.authorHandle || item.author }}</span>
-          <button class="btn-link" (click)="openUrl(item.url); $event.stopPropagation()">
-            View original ↗
-          </button>
+          <div class="footer-actions">
+            <button class="btn-icon-sm" (click)="markAsIrrelevant(item); $event.stopPropagation()"
+              [title]="i18n.t.feed.markIrrelevant">
+              🚫
+            </button>
+            <button class="btn-link" (click)="openUrl(item.url); $event.stopPropagation()">
+              View original ↗
+            </button>
+          </div>
         </div>
 
         <div class="selection-indicator">

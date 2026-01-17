@@ -87,6 +87,8 @@ export class SidebarComponent {
         return '📡';
       case 'blog':
         return '📝';
+      case 'youtube':
+        return '▶️';
       default:
         return '📄';
     }
@@ -100,6 +102,8 @@ export class SidebarComponent {
         return 'icon-rss';
       case 'blog':
         return 'icon-blog';
+      case 'youtube':
+        return 'icon-youtube';
       default:
         return '';
     }
@@ -127,7 +131,52 @@ export class SidebarComponent {
     this.editingFeedId.set(null);
     this.newFeedName.set('');
     this.newFeedUrl.set('');
-    this.newFeedType.set('twitter');
+    this.newFeedType.set('rss');
+  }
+
+  updateUrl(url: string): void {
+    this.newFeedUrl.set(url);
+    this.newFeedType.set(this.detectFeedType(url));
+  }
+
+  detectFeedType(input: string): Feed['type'] {
+    const trimmed = input.trim().toLowerCase();
+
+    // Twitter: only by domain (not @ since other social networks use it too)
+    if (trimmed.includes('twitter.com') || trimmed.includes('x.com')) {
+      return 'twitter';
+    }
+
+    // RSS: Common RSS feed patterns
+    if (trimmed.endsWith('/feed') || trimmed.endsWith('/feed/')) {
+      return 'rss';
+    }
+    if (trimmed.endsWith('/rss') || trimmed.endsWith('/rss/')) {
+      return 'rss';
+    }
+    if (trimmed.endsWith('.xml') || trimmed.endsWith('.rss')) {
+      return 'rss';
+    }
+    if (trimmed.includes('/feed/') || trimmed.includes('/rss/')) {
+      return 'rss';
+    }
+    if (trimmed.includes('medium.com/feed/')) {
+      return 'rss';
+    }
+    if (trimmed.includes('feeds.feedburner.com')) {
+      return 'rss';
+    }
+
+    // YouTube: channel ID (starts with UC) or youtube.com URL
+    if (trimmed.startsWith('uc') && trimmed.length >= 20) {
+      return 'youtube';
+    }
+    if (trimmed.includes('youtube.com/channel/')) {
+      return 'youtube';
+    }
+
+    // Default to blog (scraping)
+    return 'blog';
   }
 
   saveFeed(): void {

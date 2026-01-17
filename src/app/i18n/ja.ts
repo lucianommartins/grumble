@@ -23,6 +23,9 @@ export const ja: LocaleStrings = {
     delete: '削除',
     image: '画像',
     video: '動画',
+    originalMedia: '元のメディア',
+    aiGenerated: 'AI生成',
+    confirm: '確認',
   },
 
   // 認証
@@ -72,6 +75,8 @@ export const ja: LocaleStrings = {
     typeTwitter: 'Twitter/X',
     typeRss: 'RSS フィード',
     typeBlog: 'ブログ（スクレイピング）',
+    typeYoutube: 'YouTube',
+    autoDetected: '自動検出',
     howItWorks: '使い方',
     howStep1: 'ソースからデータを同期',
     howStep2: '興味のある更新を選択',
@@ -90,22 +95,27 @@ export const ja: LocaleStrings = {
     selectToGenerate: 'アイテムを選択してスレッド生成をクリック',
     hideUsedItems: '使用済みを非表示',
     minutesAgo: '分前',
-    hoursAgo: '時間前',
+    hoursAgo: 'h atrás',
+    daysAgo: '日前',
+    justNow: 'たった今',
     alsoIn: 'その他：',
+    confirmDelete: 'キャッシュから {count} 件の選択した項目を削除しますか?',
   },
 
-  // スレッドパネル
-  thread: {
-    title: 'スレッドジェネレーター',
-    noThread: 'スレッドがまだ生成されていません',
+  // コンテンツパネル（旧スレッドパネル）
+  content: {
+    title: 'コンテンツジェネレーター',
+    noContent: 'コンテンツがまだ生成されていません',
     selectItems: 'フィードからアイテムを選択して生成をクリック',
-    generateThread: '✨ スレッドを生成',
+    generateContent: 'コンテンツを生成',
+    selectPlatforms: 'プラットフォームを選択',
     generating: '生成中...',
-    generatingViral: '最適化スレッドを作成中...',
-    generatingHint: 'コンテンツを分析し最適化されたツイートを作成中',
+    generatingOptimized: '最適化コンテンツを作成中...',
+    generatingHint: 'コンテンツを分析し最適化された投稿を作成中',
     regenerate: '再生成',
     copyToClipboard: 'コピー',
     copied: 'コピーしました！',
+    post: '投稿',
     tweet: 'ツイート',
     addMedia: 'メディアを追加',
     generatingImage: '画像を生成中...',
@@ -116,15 +126,34 @@ export const ja: LocaleStrings = {
     startingVideo: '動画生成を開始中...',
     urlContext: '追加 URL（コンテキスト用）',
     urlPlaceholder: 'URL をここに貼り付け（1行に1つ）',
-    urlHint: '追加 URL はスレッドを充実させるために使用されます',
+    urlHint: '追加 URL はコンテンツを充実させるために使用されます',
     regenerateMedia: 'メディアを再生成',
     generate: '生成',
+    comment: 'コメント',
+    referenceLink: '参照リンク',
+  },
+
+  // プラットフォーム
+  platforms: {
+    twitter: 'Twitter',
+    linkedin: 'LinkedIn',
+    threads: 'Threads',
+    bluesky: 'BlueSky',
+    selectAtLeastOne: '少なくとも1つのプラットフォームを選択してください',
   },
 
   // メディア
   media: {
     generatingImage: '画像を生成中...',
     generatingVideo: '動画を生成中...',
+    tabTitle: 'メディア',
+    assetsTitle: 'メディアアセット',
+    noAssets: 'アセットなし',
+    generateAll: 'すべて生成',
+    downloadAll: 'すべてダウンロード',
+    linkedinHint: 'LinkedInは1つのメディアのみ許可。画像か動画を選択。',
+    imageFor: '画像：',
+    videoFor: '動画：',
   },
 
   // エラー

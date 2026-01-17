@@ -23,6 +23,9 @@ export const zh: LocaleStrings = {
     delete: '删除',
     image: '图片',
     video: '视频',
+    originalMedia: '原始媒体',
+    aiGenerated: 'AI生成',
+    confirm: '确认',
   },
 
   // 认证
@@ -72,6 +75,8 @@ export const zh: LocaleStrings = {
     typeTwitter: 'Twitter/X',
     typeRss: 'RSS 订阅',
     typeBlog: '博客（抓取）',
+    typeYoutube: 'YouTube',
+    autoDetected: '自动检测',
     howItWorks: '使用说明',
     howStep1: '从您的来源同步数据',
     howStep2: '选择感兴趣的更新',
@@ -90,22 +95,27 @@ export const zh: LocaleStrings = {
     selectToGenerate: '选择项目并点击生成推文串',
     hideUsedItems: '隐藏已使用项目',
     minutesAgo: '分钟前',
-    hoursAgo: '小时前',
+    hoursAgo: 'h atrás',
+    daysAgo: '天前',
+    justNow: '刚刚',
     alsoIn: '同时在：',
+    confirmDelete: '从缓存中删除 {count} 个选中的项目?',
   },
 
-  // 推文串面板
-  thread: {
-    title: '推文串生成器',
-    noThread: '尚未生成推文串',
+  // 内容面板（原推文串面板）
+  content: {
+    title: '内容生成器',
+    noContent: '尚未生成内容',
     selectItems: '从信息流中选择项目并点击生成',
-    generateThread: '✨ 生成推文串',
+    generateContent: '生成内容',
+    selectPlatforms: '选择平台',
     generating: '生成中...',
-    generatingViral: '正在创建优化推文串...',
-    generatingHint: '正在分析内容并创建优化推文',
+    generatingOptimized: '正在创建优化内容...',
+    generatingHint: '正在分析内容并创建优化帖子',
     regenerate: '重新生成',
     copyToClipboard: '复制',
     copied: '已复制！',
+    post: '帖子',
     tweet: '推文',
     addMedia: '添加媒体',
     generatingImage: '生成图片中...',
@@ -116,15 +126,34 @@ export const zh: LocaleStrings = {
     startingVideo: '开始生成视频...',
     urlContext: '补充网址作为上下文',
     urlPlaceholder: '在此粘贴网址，每行一个',
-    urlHint: '补充网址将用于丰富推文串内容',
+    urlHint: '补充网址将用于丰富内容',
     regenerateMedia: '重新生成媒体',
     generate: '生成',
+    comment: '评论',
+    referenceLink: '参考链接',
+  },
+
+  // 平台
+  platforms: {
+    twitter: 'Twitter',
+    linkedin: 'LinkedIn',
+    threads: 'Threads',
+    bluesky: 'BlueSky',
+    selectAtLeastOne: '请至少选择一个平台',
   },
 
   // 媒体
   media: {
     generatingImage: '生成图片中...',
     generatingVideo: '生成视频中...',
+    tabTitle: '媒体',
+    assetsTitle: '媒体资源',
+    noAssets: '没有媒体资源',
+    generateAll: '全部生成',
+    downloadAll: '全部下载',
+    linkedinHint: 'LinkedIn只接受1个媒体。请选择图片或视频。',
+    imageFor: '图片用于',
+    videoFor: '视频用于',
   },
 
   // 错误

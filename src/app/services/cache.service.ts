@@ -103,6 +103,20 @@ export class CacheService {
   }
 
   /**
+   * Delete item from cache by ID
+   */
+  async delete(id: string): Promise<void> {
+    await this.ensureReady();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(id);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
    * Get all cached items for a specific feed
    */
   async getByFeed(feedId: string): Promise<FeedItem[]> {

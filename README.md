@@ -17,15 +17,19 @@
 
 ## Visão Geral
 
-DevPulse é uma aplicação web moderna que agrega conteúdo de múltiplas fontes (Twitter/X, RSS feeds, blogs) e utiliza a IA Google Gemini para gerar threads do Twitter otimizadas para máximo engajamento.
+DevPulse é uma aplicação web moderna que agrega conteúdo de múltiplas fontes (Twitter/X, YouTube, RSS feeds, blogs) e utiliza a IA Google Gemini para gerar threads do Twitter otimizadas para máximo engajamento. Com detecção automática de tipo de fonte e extração inteligente de mídia.
 
 ### Principais Funcionalidades
 
 | Funcionalidade | Descrição |
 |----------------|-----------|
-| 🌐 **Agregação Multi-fonte** | Combine Twitter, RSS e blogs em um único feed |
-| 🤖 **Geração de Threads com IA** | Gemini 3.0 Flash cria threads otimizadas |
+| 🌐 **Agregação Multi-fonte** | Combine Twitter/X, YouTube, RSS e blogs em um único feed |
+| 🔍 **Detecção Automática de Tipo** | Identifica automaticamente Twitter, YouTube, RSS ou Blog pela URL |
+| 📺 **Suporte YouTube** | Busca vídeos via RSS de canais usando Channel ID |
+| 🖼️ **Aba Media Assets** | Visualize e baixe mídia original extraída dos feeds |
+| 🤖 **Geração de Threads com IA** | Gemini 3.0 Flash cria threads otimizadas por plataforma |
 | 🎨 **Geração de Mídia com IA** | Gere imagens (Nano Banana) e vídeos (Veo 3.1) |
+| 🐦 **Extração de Vídeo do Twitter** | Extrai MP4 de alta qualidade via host-swap (pbs.twimg) |
 | 🔐 **Criptografia Ponta a Ponta** | API keys criptografadas em repouso com AES-256-GCM |
 | 🌍 **8 Idiomas** | i18n completo: PT-BR, PT-PT, ES, FR, ZH, JA, DE, EN |
 | 🔑 **Modelo BYOK** | Bring Your Own Key - usuários fornecem suas próprias API keys |
@@ -48,9 +52,11 @@ graph TB
             SyncService["SyncService"]
             CacheService["CacheService"]
             TwitterService["TwitterService"]
+            YouTubeService["YouTubeService"]
             RssService["RssService"]
             GeminiService["GeminiService"]
             MediaService["MediaService"]
+            ItemStateService["ItemStateService"]
             CryptoService["CryptoService"]
             I18nService["I18nService"]
         end
@@ -67,6 +73,7 @@ graph TB
 
     subgraph External["APIs Externas"]
         Twitter["Twitter/X API v2"]
+        YouTube["YouTube RSS<br/>Channel Feeds"]
         RSS["RSS Feeds<br/>(via CORS Proxy)"]
         Gemini["Google Gemini API<br/>gemini-3.0-flash"]
     end
@@ -75,6 +82,7 @@ graph TB
     CryptoService --> Firestore
     FeedService --> LocalStorage
     TwitterService --> Proxy
+    YouTubeService --> YouTube
     RssService --> RSS
     GeminiService --> Gemini
     MediaService --> Gemini
@@ -210,8 +218,10 @@ devpulse/
 │   │   │   ├── feed-dashboard/  # Grid de conteúdo principal
 │   │   │   ├── login/           # UI de autenticação
 │   │   │   ├── settings/        # Configurações do usuário
-│   │   │   ├── sidebar/         # Fontes e filtros
-│   │   │   └── thread-panel/    # Threads geradas por IA
+│   │   │   ├── sidebar/         # Fontes e filtros com auto-detecção
+│   │   │   ├── thread-panel/    # Threads geradas por IA + aba Media Assets
+│   │   │   ├── confirm-dialog/  # Diálogo de confirmação tematizado
+│   │   │   └── skeleton-item/   # Loading state para itens do feed
 │   │   ├── i18n/                # Internacionalização
 │   │   │   ├── en.ts            # Inglês (padrão)
 │   │   │   ├── pt-br.ts         # Português Brasileiro
@@ -230,7 +240,10 @@ devpulse/
 │   │       ├── gemini.service.ts        # Geração de threads com IA
 │   │       ├── media.service.ts         # Geração de imagem/vídeo
 │   │       ├── sync.service.ts          # Sincronização de dados
-│   │       ├── twitter.service.ts       # Cliente Twitter API
+│   │       ├── twitter.service.ts       # Cliente Twitter API com extração de vídeo
+│   │       ├── youtube.service.ts       # Cliente YouTube RSS
+│   │       ├── item-state.service.ts    # Persistência de estado usado/irrelevante
+│   │       ├── confirm-dialog.service.ts# Serviço de diálogos de confirmação
 │   │       └── user-settings.service.ts # Configurações criptografadas
 │   └── environments/            # Configs de ambiente
 ├── server/                      # Servidor proxy Express

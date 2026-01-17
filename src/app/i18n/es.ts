@@ -23,6 +23,9 @@ export const es: LocaleStrings = {
     delete: 'Eliminar',
     image: 'Imagen',
     video: 'Video',
+    originalMedia: 'Multimedia Original',
+    aiGenerated: 'Generado por IA',
+    confirm: 'Confirmar',
   },
 
   // Autenticación
@@ -72,6 +75,8 @@ export const es: LocaleStrings = {
     typeTwitter: 'Twitter/X',
     typeRss: 'Feed RSS',
     typeBlog: 'Blog (scraping)',
+    typeYoutube: 'YouTube',
+    autoDetected: 'Auto-detectado',
     howItWorks: 'Cómo funciona',
     howStep1: 'Sincroniza datos de tus fuentes',
     howStep2: 'Selecciona las actualizaciones interesantes',
@@ -91,21 +96,26 @@ export const es: LocaleStrings = {
     hideUsedItems: 'Ocultar elementos usados',
     minutesAgo: 'min atrás',
     hoursAgo: 'h atrás',
+    daysAgo: 'd hace',
+    justNow: 'ahora',
     alsoIn: 'También en:',
+    confirmDelete: '¿Eliminar {count} elementos seleccionados del caché?',
   },
 
-  // Panel de Hilo
-  thread: {
-    title: 'Generador de Hilos',
-    noThread: 'Ningún hilo generado',
+  // Panel de Contenido (antes Panel de Hilo)
+  content: {
+    title: 'Generador de Contenido',
+    noContent: 'Ningún contenido generado',
     selectItems: 'Selecciona elementos del feed y haz clic en Generar',
-    generateThread: '✨ Generar Hilo',
+    generateContent: 'Generar Contenido',
+    selectPlatforms: 'Selecciona las plataformas',
     generating: 'Generando...',
-    generatingViral: 'Creando hilo optimizado...',
-    generatingHint: 'Analizando contenido y creando tweets optimizados',
+    generatingOptimized: 'Creando contenido optimizado...',
+    generatingHint: 'Analizando contenido y creando publicaciones optimizadas',
     regenerate: 'Regenerar',
     copyToClipboard: 'Copiar',
     copied: '¡Copiado!',
+    post: 'Publicación',
     tweet: 'Tweet',
     addMedia: 'Agregar multimedia',
     generatingImage: 'Generando imagen...',
@@ -116,15 +126,34 @@ export const es: LocaleStrings = {
     startingVideo: 'Iniciando generación del video...',
     urlContext: 'URLs adicionales para contexto',
     urlPlaceholder: 'Pega URLs aquí, una por línea',
-    urlHint: 'Las URLs adicionales se usarán para enriquecer el hilo',
+    urlHint: 'Las URLs adicionales se usarán para enriquecer el contenido',
     regenerateMedia: 'Regenerar multimedia',
     generate: 'Generar',
+    comment: 'Comentario',
+    referenceLink: 'Enlace de referencia',
+  },
+
+  // Plataformas
+  platforms: {
+    twitter: 'Twitter',
+    linkedin: 'LinkedIn',
+    threads: 'Threads',
+    bluesky: 'BlueSky',
+    selectAtLeastOne: 'Selecciona al menos una plataforma',
   },
 
   // Multimedia
   media: {
     generatingImage: 'Generando imagen...',
     generatingVideo: 'Generando video...',
+    tabTitle: 'Multimedia',
+    assetsTitle: 'Assets Multimedia',
+    noAssets: 'Sin assets',
+    generateAll: 'Generar Todos',
+    downloadAll: 'Descargar Todos',
+    linkedinHint: 'LinkedIn acepta solo 1 multimedia. Elige imagen o video.',
+    imageFor: 'Imagen para',
+    videoFor: 'Video para',
   },
 
   // Errores

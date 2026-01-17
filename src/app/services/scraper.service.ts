@@ -170,8 +170,8 @@ export class ScraperService {
     // Extract date
     const publishedAt = this.extractDate(doc, url);
 
-    // Extract image
-    const imageUrl = this.extractImage(doc, url);
+    // Extract all images
+    const imageUrls = this.extractImages(doc, url);
 
     // Generate unique ID from URL
     const id = `scrape_${feed.id}_${this.hashString(url)}`;
@@ -186,7 +186,7 @@ export class ScraperService {
       author: feed.name,
       publishedAt,
       url,
-      mediaUrls: imageUrl ? [imageUrl] : undefined,
+      mediaUrls: imageUrls.length > 0 ? imageUrls : undefined,
       selected: false
     };
   }
@@ -315,21 +315,78 @@ export class ScraperService {
     return new Date();
   }
 
-  private extractImage(doc: Document, baseUrl: string): string | undefined {
-    // Try og:image
-    const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
-    if (ogImage) return this.makeAbsolute(ogImage, baseUrl);
+  private extractImages(doc: Document, baseUrl: string): string[] {
+    const images: string[] = [];
+    const seenUrls = new Set<string>();
 
-    // Try first large image in article
-    const images = doc.querySelectorAll('article img, main img');
-    for (const img of Array.from(images)) {
-      const src = img.getAttribute('src') || img.getAttribute('data-src');
-      if (src && !src.includes('avatar') && !src.includes('icon')) {
-        return this.makeAbsolute(src, baseUrl);
+    // Helper to add unique URL
+    const addImage = (url: string | null | undefined) => {
+      if (!url) return;
+      const absoluteUrl = this.makeAbsolute(url, baseUrl);
+      // Skip duplicates, avatars, icons, and small placeholder images
+      if (seenUrls.has(absoluteUrl)) return;
+      if (absoluteUrl.includes('avatar') || absoluteUrl.includes('icon')) return;
+      if (absoluteUrl.includes('1x1') || absoluteUrl.includes('placeholder')) return;
+      if (absoluteUrl.includes('profile') || absoluteUrl.includes('logo')) return;
+      // Skip small resize (avatars/thumbnails on Medium)
+      if (absoluteUrl.includes('resize:fill:') && /fill:\d+:\d+/.test(absoluteUrl)) {
+        const match = absoluteUrl.match(/fill:(\d+):(\d+)/);
+        if (match && parseInt(match[1]) < 100) return;  // Skip small images
+      }
+      seenUrls.add(absoluteUrl);
+      images.push(absoluteUrl);
+    };
+
+  // Try og:image first
+    const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+    addImage(ogImage);
+
+    // Get all images from article/main content
+    const articleSelectors = ['article img', 'main img', '.post-content img', '.entry-content img', '[class*="article"] img'];
+    for (const selector of articleSelectors) {
+      const imgs = doc.querySelectorAll(selector);
+      for (const img of Array.from(imgs)) {
+        const src = img.getAttribute('src') || img.getAttribute('data-src');
+        addImage(src);
+        // Also check srcset for larger images
+        const srcset = img.getAttribute('srcset');
+        if (srcset) {
+          const srcsetParts = srcset.split(',').map(s => s.trim().split(' ')[0]);
+          srcsetParts.forEach(addImage);
+        }
       }
     }
 
-    return undefined;
+    // Also try figure elements (common in Medium)
+    const figures = doc.querySelectorAll('figure img');
+    for (const img of Array.from(figures)) {
+      const src = img.getAttribute('src') || img.getAttribute('data-src');
+      addImage(src);
+    }
+
+    // Medium-specific fallback: extract miro.medium.com URLs from raw HTML
+    // This helps when Medium renders images via JavaScript
+    if (baseUrl.includes('medium.com') || images.length === 0) {
+      const htmlString = doc.documentElement.outerHTML;
+      // Pattern for Medium CDN images
+      const mediumImagePattern = /https:\/\/miro\.medium\.com\/v2\/resize:[^"'\s]+/g;
+      const matches = htmlString.match(mediumImagePattern);
+      if (matches) {
+        matches.forEach(url => addImage(url));
+      }
+
+      // Also try extracting from any script tags containing image data
+      const scripts = doc.querySelectorAll('script');
+      for (const script of Array.from(scripts)) {
+        const content = script.textContent || '';
+        const scriptMatches = content.match(/https:\/\/miro\.medium\.com[^"'\s]+(\.png|\.jpg|\.gif|\.webp)/g);
+        if (scriptMatches) {
+          scriptMatches.forEach(url => addImage(url));
+        }
+      }
+    }
+
+    return images;
   }
 
   private makeAbsolute(url: string, baseUrl: string): string {

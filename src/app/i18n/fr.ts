@@ -23,6 +23,9 @@ export const fr: LocaleStrings = {
     delete: 'Supprimer',
     image: 'Image',
     video: 'Vidéo',
+    originalMedia: 'Média Original',
+    aiGenerated: 'Généré par IA',
+    confirm: 'Confirmer',
   },
 
   // Authentification
@@ -72,6 +75,8 @@ export const fr: LocaleStrings = {
     typeTwitter: 'Twitter/X',
     typeRss: 'Flux RSS',
     typeBlog: 'Blog (scraping)',
+    typeYoutube: 'YouTube',
+    autoDetected: 'Auto-détecté',
     howItWorks: 'Comment ça marche',
     howStep1: 'Synchronise les données de vos sources',
     howStep2: 'Sélectionnez les mises à jour intéressantes',
@@ -90,22 +95,27 @@ export const fr: LocaleStrings = {
     selectToGenerate: 'Sélectionnez des éléments et cliquez sur Générer Thread',
     hideUsedItems: 'Masquer les éléments utilisés',
     minutesAgo: 'min',
-    hoursAgo: 'h',
+    hoursAgo: 'h atrás',
+    daysAgo: 'j',
+    justNow: 'maintenant',
     alsoIn: 'Aussi dans :',
+    confirmDelete: 'Supprimer {count} éléments sélectionnés du cache?',
   },
 
-  // Panneau de Thread
-  thread: {
-    title: 'Générateur de Thread',
-    noThread: 'Aucun thread généré',
+  // Panneau de Contenu (anciennement Panneau de Thread)
+  content: {
+    title: 'Générateur de Contenu',
+    noContent: 'Aucun contenu généré',
     selectItems: 'Sélectionnez des éléments du flux et cliquez sur Générer',
-    generateThread: '✨ Générer Thread',
+    generateContent: 'Générer le Contenu',
+    selectPlatforms: 'Sélectionnez les plateformes',
     generating: 'Génération...',
-    generatingViral: 'Création d\'un thread optimisé...',
-    generatingHint: 'Analyse du contenu et création de tweets optimisés',
+    generatingOptimized: 'Création de contenu optimisé...',
+    generatingHint: 'Analyse du contenu et création de publications optimisées',
     regenerate: 'Régénérer',
     copyToClipboard: 'Copier',
     copied: 'Copié !',
+    post: 'Publication',
     tweet: 'Tweet',
     addMedia: 'Ajouter un média',
     generatingImage: 'Génération de l\'image...',
@@ -116,15 +126,34 @@ export const fr: LocaleStrings = {
     startingVideo: 'Démarrage de la génération vidéo...',
     urlContext: 'URLs supplémentaires pour contexte',
     urlPlaceholder: 'Collez les URLs ici, une par ligne',
-    urlHint: 'Les URLs supplémentaires seront utilisées pour enrichir le thread',
+    urlHint: 'Les URLs supplémentaires seront utilisées pour enrichir le contenu',
     regenerateMedia: 'Régénérer le média',
     generate: 'Générer',
+    comment: 'Commentaire',
+    referenceLink: 'Lien de référence',
+  },
+
+  // Plateformes
+  platforms: {
+    twitter: 'Twitter',
+    linkedin: 'LinkedIn',
+    threads: 'Threads',
+    bluesky: 'BlueSky',
+    selectAtLeastOne: 'Sélectionnez au moins une plateforme',
   },
 
   // Média
   media: {
     generatingImage: 'Génération de l\'image...',
     generatingVideo: 'Génération de la vidéo...',
+    tabTitle: 'Média',
+    assetsTitle: 'Assets Média',
+    noAssets: 'Aucun asset',
+    generateAll: 'Générer Tout',
+    downloadAll: 'Télécharger Tout',
+    linkedinHint: 'LinkedIn accepte 1 seul média. Choisissez image ou vidéo.',
+    imageFor: 'Image pour',
+    videoFor: 'Vidéo pour',
   },
 
   // Erreurs

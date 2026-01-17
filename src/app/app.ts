@@ -4,6 +4,7 @@ import { FeedDashboardComponent } from './components/feed-dashboard/feed-dashboa
 import { ThreadPanelComponent } from './components/thread-panel/thread-panel.component';
 import { LoginComponent } from './components/login/login.component';
 import { SettingsComponent } from './components/settings/settings.component';
+import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { AuthService } from './services/auth.service';
 import { I18nService } from './i18n';
 
@@ -17,7 +18,7 @@ interface LayoutSettings {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [SidebarComponent, FeedDashboardComponent, ThreadPanelComponent, LoginComponent, SettingsComponent],
+  imports: [SidebarComponent, FeedDashboardComponent, ThreadPanelComponent, LoginComponent, SettingsComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

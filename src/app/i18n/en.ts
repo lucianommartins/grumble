@@ -21,6 +21,9 @@ export const en = {
     delete: 'Delete',
     image: 'Image',
     video: 'Video',
+    originalMedia: 'Original Media',
+    aiGenerated: 'AI Generated',
+    confirm: 'Confirm',
   },
 
   // Auth
@@ -70,6 +73,8 @@ export const en = {
     typeTwitter: 'Twitter/X',
     typeRss: 'RSS Feed',
     typeBlog: 'Blog (scraping)',
+    typeYoutube: 'YouTube',
+    autoDetected: 'Auto-detected',
     howItWorks: 'How it works',
     howStep1: 'Syncs real data from sources',
     howStep2: 'Select interesting updates',
@@ -89,21 +94,26 @@ export const en = {
     hideUsedItems: 'Hide used items',
     minutesAgo: 'min ago',
     hoursAgo: 'h ago',
+    daysAgo: 'd ago',
+    justNow: 'now',
     alsoIn: 'Also in:',
+    confirmDelete: 'Delete {count} selected items from cache?',
   },
 
-  // Thread Panel
-  thread: {
-    title: 'Thread Generator',
-    noThread: 'No thread generated yet',
+  // Content Panel (formerly Thread Panel)
+  content: {
+    title: 'Content Generator',
+    noContent: 'No content generated yet',
     selectItems: 'Select items from the feed and click Generate',
-    generateThread: '✨ Generate Thread',
+    generateContent: 'Generate Content',
+    selectPlatforms: 'Select platforms',
     generating: 'Generating...',
-    generatingViral: 'Generating optimized thread...',
-    generatingHint: 'Analyzing content and creating optimized tweets',
+    generatingOptimized: 'Generating optimized content...',
+    generatingHint: 'Analyzing content and creating optimized posts',
     regenerate: 'Regenerate',
     copyToClipboard: 'Copy to clipboard',
     copied: 'Copied!',
+    post: 'Post',
     tweet: 'Tweet',
     addMedia: 'Add media',
     generatingImage: 'Generating image...',
@@ -114,15 +124,34 @@ export const en = {
     startingVideo: 'Starting video generation...',
     urlContext: 'Additional URLs for context',
     urlPlaceholder: 'Paste URLs here, one per line',
-    urlHint: 'Additional URLs will be used as context to enrich the thread',
+    urlHint: 'Additional URLs will be used as context to enrich the content',
     regenerateMedia: 'Regenerate media',
     generate: 'Generate',
+    comment: 'Comment',
+    referenceLink: 'Reference link',
+  },
+
+  // Platforms
+  platforms: {
+    twitter: 'Twitter',
+    linkedin: 'LinkedIn',
+    threads: 'Threads',
+    bluesky: 'BlueSky',
+    selectAtLeastOne: 'Select at least one platform',
   },
 
   // Media
   media: {
     generatingImage: 'Generating image...',
     generatingVideo: 'Generating video...',
+    tabTitle: 'Media',
+    assetsTitle: 'Media Assets',
+    noAssets: 'No media assets to generate',
+    generateAll: 'Generate All',
+    downloadAll: 'Download All',
+    linkedinHint: 'LinkedIn accepts only 1 media. Choose between image or video.',
+    imageFor: 'Image for',
+    videoFor: 'Video for',
   },
 
   // Errors

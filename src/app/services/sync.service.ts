@@ -4,7 +4,9 @@ import { FeedService } from './feed.service';
 import { TwitterService } from './twitter.service';
 import { RssService } from './rss.service';
 import { ScraperService } from './scraper.service';
+import { YouTubeService } from './youtube.service';
 import { CacheService } from './cache.service';
+import { ItemStateService } from './item-state.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +16,9 @@ export class SyncService {
   private twitterService = inject(TwitterService);
   private rssService = inject(RssService);
   private scraperService = inject(ScraperService);
+  private youtubeService = inject(YouTubeService);
   private cacheService = inject(CacheService);
+  private itemStateService = inject(ItemStateService);
 
   // State
   items = signal<FeedItem[]>([]);
@@ -40,7 +44,10 @@ export class SyncService {
 
     if (cachedItems.length > 0) {
       // Deduplicate cached items
-      const deduped = this.deduplicateItems(cachedItems);
+      let deduped = this.deduplicateItems(cachedItems);
+
+      // Apply Firestore states (used/irrelevant) from cloud
+      deduped = this.applyFirestoreStates(deduped);
 
       // Sort by date descending
       deduped.sort((a, b) =>
@@ -48,6 +55,26 @@ export class SyncService {
       );
       this.items.set(deduped);
     }
+  }
+
+  /**
+   * Apply Firestore states to items (used, irrelevant)
+   */
+  private applyFirestoreStates(items: FeedItem[]): FeedItem[] {
+    return items.map(item => {
+      const hash = this.itemStateService.generateItemHash(item.url, item.title, item.feedId);
+      const state = this.itemStateService.getState(hash);
+
+      if (state) {
+        return {
+          ...item,
+          used: state.used || item.used,
+          // If marked irrelevant in Firestore, treat as used
+          selected: false
+        };
+      }
+      return item;
+    });
   }
 
   /**
@@ -107,6 +134,8 @@ export class SyncService {
         return this.rssService.fetchFeed(feed, hours);
       case 'blog':
         return this.scraperService.scrapeBlog(feed, hours);
+      case 'youtube':
+        return this.youtubeService.fetchVideos(feed, hours);
       default:
         return [];
     }
@@ -146,22 +175,33 @@ export class SyncService {
    */
   markSelectedAsUsed(): void {
     const usedItems: FeedItem[] = [];
+    const itemHashes: string[] = [];
 
     this.items.update(items =>
       items.map(item => {
         if (item.selected) {
           const updatedItem = { ...item, used: true, selected: false };
           usedItems.push(updatedItem);
+          // Generate hash for Firestore sync
+          const hash = this.itemStateService.generateItemHash(item.url, item.title, item.feedId);
+          itemHashes.push(hash);
           return updatedItem;
         }
         return item;
       })
     );
 
-    // Persist used state to cache
+    // Persist used state to local cache
     usedItems.forEach(item => {
       this.cacheService.set(item);
     });
+
+    // Sync to Firestore (async, fire-and-forget)
+    if (itemHashes.length > 0) {
+      this.itemStateService.markMultipleAsUsed(itemHashes).catch(err => {
+        console.warn('[SyncService] Failed to sync used states to Firestore:', err);
+      });
+    }
   }
 
   /**
@@ -169,21 +209,45 @@ export class SyncService {
    */
   markAsIrrelevant(itemId: string): void {
     let itemToUpdate: FeedItem | null = null;
+    let itemHash: string | null = null;
 
     this.items.update(items =>
       items.map(item => {
         if (item.id === itemId) {
           itemToUpdate = { ...item, used: true, selected: false };
+          itemHash = this.itemStateService.generateItemHash(item.url, item.title, item.feedId);
           return itemToUpdate;
         }
         return item;
       })
     );
 
-    // Persist to cache
+    // Persist to local cache
     if (itemToUpdate) {
       this.cacheService.set(itemToUpdate);
     }
+
+    // Sync to Firestore
+    if (itemHash) {
+      this.itemStateService.markAsIrrelevant(itemHash).catch(err => {
+        console.warn('[SyncService] Failed to sync irrelevant state to Firestore:', err);
+      });
+    }
+  }
+
+  /**
+   * Delete multiple items from cache
+   */
+  async deleteItems(itemIds: string[]): Promise<void> {
+    // Remove from local state
+    this.items.update(items => items.filter(item => !itemIds.includes(item.id)));
+
+    // Remove from cache
+    for (const itemId of itemIds) {
+      await this.cacheService.delete(itemId);
+    }
+
+    console.log(`[SyncService] Deleted ${itemIds.length} items from cache`);
   }
 
   /**

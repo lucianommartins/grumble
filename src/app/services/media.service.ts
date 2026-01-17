@@ -108,7 +108,7 @@ export class MediaService {
 
     try {
       // Start video generation
-      onProgress?.(this.i18n.t.thread.startingVideo);
+      onProgress?.(this.i18n.t.content.startingVideo);
 
       const startResponse = await this.http.post<VideoGenerationResponse>(
         `${this.API_BASE}/generate-video`,
@@ -125,7 +125,7 @@ export class MediaService {
       }
 
       // Poll for completion
-      onProgress?.(this.i18n.t.thread.generatingVideoMinutes);
+      onProgress?.(this.i18n.t.content.generatingVideoMinutes);
       const videoUri = await this.pollVideoStatus(operationName, apiKey, onProgress);
 
       return {
@@ -161,13 +161,13 @@ export class MediaService {
       if (statusResponse?.done) {
         const videoUri = statusResponse.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri;
         if (videoUri) {
-          onProgress?.(this.i18n.t.thread.videoSuccess);
+          onProgress?.(this.i18n.t.content.videoSuccess);
           return videoUri;
         }
         throw new Error('Video completed but no URI found');
       }
 
-      onProgress?.(`${this.i18n.t.thread.generatingVideoProgress} (${attempts * 5}s)`);
+      onProgress?.(`${this.i18n.t.content.generatingVideoProgress} (${attempts * 5}s)`);
       await this.sleep(5000);
     }
 

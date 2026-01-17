@@ -23,6 +23,9 @@ export const ptBR: LocaleStrings = {
     delete: 'Excluir',
     image: 'Imagem',
     video: 'Vídeo',
+    originalMedia: 'Mídia Original',
+    aiGenerated: 'Gerado por IA',
+    confirm: 'Confirmar',
   },
 
   // Autenticação
@@ -72,6 +75,8 @@ export const ptBR: LocaleStrings = {
     typeTwitter: 'Twitter/X',
     typeRss: 'Feed RSS',
     typeBlog: 'Blog (scraping)',
+    typeYoutube: 'YouTube',
+    autoDetected: 'Auto-detectado',
     howItWorks: 'Como funciona',
     howStep1: 'Sincroniza dados das suas fontes',
     howStep2: 'Selecione as atualizações interessantes',
@@ -91,21 +96,26 @@ export const ptBR: LocaleStrings = {
     hideUsedItems: 'Ocultar itens usados',
     minutesAgo: 'min atrás',
     hoursAgo: 'h atrás',
+    daysAgo: 'd atrás',
+    justNow: 'agora',
     alsoIn: 'Também em:',
+    confirmDelete: 'Excluir {count} itens selecionados do cache?',
   },
 
-  // Painel de Thread
-  thread: {
-    title: 'Gerador de Thread',
-    noThread: 'Nenhuma thread gerada',
+  // Painel de Conteúdo (antes Painel de Thread)
+  content: {
+    title: 'Gerador de Conteúdo',
+    noContent: 'Nenhum conteúdo gerado',
     selectItems: 'Selecione itens do feed e clique em Gerar',
-    generateThread: '✨ Gerar Thread',
+    generateContent: 'Gerar Conteúdo',
+    selectPlatforms: 'Selecione as plataformas',
     generating: 'Gerando...',
-    generatingViral: 'Criando thread otimizada...',
-    generatingHint: 'Analisando conteúdo e criando tweets otimizados',
+    generatingOptimized: 'Criando conteúdo otimizado...',
+    generatingHint: 'Analisando conteúdo e criando posts otimizados',
     regenerate: 'Regenerar',
     copyToClipboard: 'Copiar',
     copied: 'Copiado!',
+    post: 'Post',
     tweet: 'Tweet',
     addMedia: 'Adicionar mídia',
     generatingImage: 'Gerando imagem...',
@@ -116,15 +126,34 @@ export const ptBR: LocaleStrings = {
     startingVideo: 'Iniciando geração do vídeo...',
     urlContext: 'URLs adicionais para contexto',
     urlPlaceholder: 'Cole URLs aqui, uma por linha',
-    urlHint: 'URLs adicionais serão usadas para enriquecer a thread',
+    urlHint: 'URLs adicionais serão usadas para enriquecer o conteúdo',
     regenerateMedia: 'Regenerar mídia',
     generate: 'Gerar',
+    comment: 'Comentário',
+    referenceLink: 'Link de referência',
+  },
+
+  // Plataformas
+  platforms: {
+    twitter: 'Twitter',
+    linkedin: 'LinkedIn',
+    threads: 'Threads',
+    bluesky: 'BlueSky',
+    selectAtLeastOne: 'Selecione pelo menos uma plataforma',
   },
 
   // Mídia
   media: {
     generatingImage: 'Gerando imagem...',
     generatingVideo: 'Gerando vídeo...',
+    tabTitle: 'Mídia',
+    assetsTitle: 'Assets de Mídia',
+    noAssets: 'Nenhum asset',
+    generateAll: 'Gerar Todos',
+    downloadAll: 'Baixar Todos',
+    linkedinHint: 'LinkedIn aceita apenas 1 mídia. Escolha imagem ou vídeo.',
+    imageFor: 'Imagem para',
+    videoFor: 'Vídeo para',
   },
 
   // Erros

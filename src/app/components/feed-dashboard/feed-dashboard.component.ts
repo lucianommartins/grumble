@@ -3,13 +3,16 @@ import { CommonModule } from '@angular/common';
 import { SyncService } from '../../services/sync.service';
 import { FeedService } from '../../services/feed.service';
 import { ThemeService } from '../../services/theme.service';
+import { ConfirmDialogService } from '../../services/confirm-dialog.service';
 import { FeedItem } from '../../models/feed.model';
 import { I18nService } from '../../i18n';
+import { SkeletonItemComponent } from '../skeleton-item/skeleton-item.component';
+import { LazyImageDirective } from '../../directives/lazy-image.directive';
 
 @Component({
   selector: 'app-feed-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SkeletonItemComponent, LazyImageDirective],
   templateUrl: './feed-dashboard.component.html',
   styleUrl: './feed-dashboard.component.css'
 })
@@ -17,6 +20,7 @@ export class FeedDashboardComponent {
   syncService = inject(SyncService);
   feedService = inject(FeedService);
   themeService = inject(ThemeService);
+  confirmDialog = inject(ConfirmDialogService);
   i18n = inject(I18nService);
   viewMode = signal<'cards' | 'list'>('list');
   sortBy = signal<'date' | 'source'>('date');
@@ -92,7 +96,7 @@ export class FeedDashboardComponent {
     const diff = now.getTime() - d.getTime();
 
     if (diff < 60000) {
-      return 'now';
+      return this.i18n.t.feed.justNow || 'now';
     }
     if (diff < 3600000) {
       const mins = Math.floor(diff / 60000);
@@ -102,7 +106,9 @@ export class FeedDashboardComponent {
       const hours = Math.floor(diff / 3600000);
       return `${hours} ${this.i18n.t.feed.hoursAgo}`;
     }
-    return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
+    // Always use relative time for consistency
+    const days = Math.floor(diff / 86400000);
+    return `${days} ${this.i18n.t.feed.daysAgo || 'd ago'}`;
   }
 
   getFeedTypeIcon(type: string): string {
@@ -138,5 +144,25 @@ export class FeedDashboardComponent {
 
   toggleTheme(): void {
     this.themeService.toggle();
+  }
+
+  async deleteSelected(): Promise<void> {
+    const selectedItems = this.syncService.selectedItems();
+    if (selectedItems.length === 0) return;
+
+    const message = this.i18n.t.feed.confirmDelete?.replace('{count}', selectedItems.length.toString())
+      || `Delete ${selectedItems.length} selected items from cache?`;
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: '🗑️ ' + (this.i18n.t.common.delete || 'Delete'),
+      message,
+      confirmText: this.i18n.t.common.delete || 'Delete',
+      cancelText: this.i18n.t.common.cancel || 'Cancel',
+      isDanger: true
+    });
+
+    if (confirmed) {
+      await this.syncService.deleteItems(selectedItems.map(item => item.id));
+    }
   }
 }

@@ -1,16 +1,16 @@
 /**
  * Feed source types supported by DevPulse
  */
-export type FeedType = 'twitter' | 'rss' | 'blog';
+export type FeedType = 'twitter' | 'rss' | 'blog' | 'youtube';
 
 /**
- * Represents a content source (Twitter profile, RSS feed, blog)
+ * Represents a content source (Twitter profile, RSS feed, blog, YouTube channel)
  */
 export interface Feed {
   id: string;
   name: string;
   type: FeedType;
-  url: string;  // @handle for Twitter, URL for RSS/blogs
+  url: string;  // @handle for Twitter, URL for RSS/blogs, channel ID for YouTube
   icon?: string;
   enabled: boolean;
   lastSync?: Date;
@@ -72,5 +72,5 @@ export interface ThreadTweet {
 export interface MediaPlaceholder {
   type: 'image' | 'video';
   prompt: string;
-  tool: 'veo3' | 'imagen';
+  tool: 'veo3' | 'nanobanana';
 }

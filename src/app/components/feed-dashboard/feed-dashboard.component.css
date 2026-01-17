@@ -189,6 +189,12 @@
   color: var(--color-text-secondary);
 }
 
+/* Skeleton list loading state */
+.loading-state.skeleton-list {
+  align-items: stretch;
+  justify-content: flex-start;
+  padding: var(--spacing-md);
+}
 .loading-spinner {
   width: 40px;
   height: 40px;
@@ -288,6 +294,8 @@
 .item-date {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
+  padding-right: var(--spacing-lg);
+    /* Space for checkbox */
 }
 
 .card-title {

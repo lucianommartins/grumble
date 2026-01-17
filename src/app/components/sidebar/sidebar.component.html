@@ -25,6 +25,10 @@
         (click)="feedService.toggleType('blog')" title="Toggle Blog">
         📝
       </button>
+      <button class="type-filter-btn" [class.active]="feedService.isTypeEnabled('youtube')"
+        (click)="feedService.toggleType('youtube')" title="Toggle YouTube">
+        ▶️
+      </button>
     </div>
 
     <div class="section-header">
@@ -41,14 +45,12 @@
       <input type="text" class="input" [placeholder]="i18n.t.sidebar.feedNamePlaceholder" [value]="newFeedName()"
         (input)="newFeedName.set($any($event.target).value)" />
       <input type="text" class="input" [placeholder]="i18n.t.sidebar.feedUrlPlaceholder" [value]="newFeedUrl()"
-        (input)="newFeedUrl.set($any($event.target).value)" />
-      <select class="input" [value]="newFeedType()" (change)="newFeedType.set($any($event.target).value)">
-        @if (userSettings.hasTwitterBearerToken()) {
-        <option value="twitter">{{ i18n.t.sidebar.typeTwitter }}</option>
-        }
-        <option value="rss">{{ i18n.t.sidebar.typeRss }}</option>
-        <option value="blog">{{ i18n.t.sidebar.typeBlog }}</option>
-      </select>
+        (input)="updateUrl($any($event.target).value)" />
+      <div class="detected-type">
+        <span class="type-icon" [class]="getFeedIconClass(newFeedType())">{{ getFeedIcon(newFeedType()) }}</span>
+        <span class="type-label">{{ newFeedType() === 'twitter' ? i18n.t.sidebar.typeTwitter : newFeedType() === 'rss' ? i18n.t.sidebar.typeRss : newFeedType() === 'youtube' ? i18n.t.sidebar.typeYoutube : i18n.t.sidebar.typeBlog }}</span>
+        <span class="type-hint">{{ i18n.t.sidebar.autoDetected || 'Auto-detected' }}</span>
+      </div>
       <div class="form-actions">
         <button class="btn btn-secondary" (click)="cancelAddForm()">{{ i18n.t.common.cancel }}</button>
         <button class="btn btn-primary" (click)="saveFeed()">{{ editingFeedId() ? i18n.t.common.save : 'Add' }}</button>
