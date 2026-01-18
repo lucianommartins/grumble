@@ -101,7 +101,7 @@ export const ptPT: LocaleStrings = {
     justNow: 'agora',
     alsoIn: 'Também em:',
     confirmDelete: 'Eliminar {count} elementos seleccionados?',
-    selectAll: 'Seleccionar todos',
+    selectAll: 'Selecionar tudo',
     clear: 'Limpiar',
     sort: 'Ordenar:',
     date: 'Fecha',
@@ -190,7 +190,7 @@ export const ptPT: LocaleStrings = {
   login: {
     welcome: 'Bem-vindo ao',
     appName: 'DevPulse',
-    tagline: 'Transforme conteúdo em threads virais para o Twitter',
+    tagline: 'Transforme conteúdo em threads apelativas para o Twitter',
     feature1Title: 'Multi-fonte',
     feature1Desc: 'Agregue Twitter, RSS e blogues',
     feature2Title: 'IA Avançada',

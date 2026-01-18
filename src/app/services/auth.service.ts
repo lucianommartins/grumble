@@ -44,7 +44,7 @@ export class AuthService {
   }
 
   private readonly ALLOWED_DOMAIN = 'google.com';
-  private readonly ALLOWED_EMAILS = ['tabatha.sk@gmail.com'];
+  private readonly ALLOWED_EMAILS = ['tabatha.sk@gmail.com', 'lucianomelomartins@gmail.com'];
 
   async signInWithGoogle(): Promise<AppUser | null> {
     this.authError.set(null);

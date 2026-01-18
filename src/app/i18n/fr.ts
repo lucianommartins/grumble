@@ -101,7 +101,7 @@ export const fr: LocaleStrings = {
     justNow: 'maintenant',
     alsoIn: 'Aussi dans :',
     confirmDelete: 'Eliminar {count} elementos seleccionados?',
-    selectAll: 'Seleccionar todos',
+    selectAll: 'Tout sélectionner',
     clear: 'Limpiar',
     sort: 'Ordenar:',
     date: 'Fecha',

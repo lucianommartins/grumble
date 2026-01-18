@@ -38,7 +38,7 @@ export function buildTwitterPrompt(items: FeedItem[], additionalUrls: string[], 
   const contentSummary = buildContentSummary(items);
   const urlsSection = buildUrlsSection(additionalUrls);
 
-  return `You are an expert at creating viral Twitter/X threads in ${lang}.
+  return `You are an expert at creating engaging Twitter/X threads in ${lang}.
 
 ## Task
 Create a Twitter thread based on the content below. The thread must:

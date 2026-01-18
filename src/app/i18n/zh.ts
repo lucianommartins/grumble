@@ -101,7 +101,7 @@ export const zh: LocaleStrings = {
     justNow: '刚刚',
     alsoIn: '同时在：',
     confirmDelete: 'Eliminar {count} elementos seleccionados?',
-    selectAll: 'Seleccionar todos',
+    selectAll: '全选',
     clear: 'Limpiar',
     sort: 'Ordenar:',
     date: 'Fecha',

@@ -101,7 +101,7 @@ export const ja: LocaleStrings = {
     justNow: 'たった今',
     alsoIn: 'その他：',
     confirmDelete: 'Eliminar {count} elementos seleccionados?',
-    selectAll: 'Seleccionar todos',
+    selectAll: 'すべて選択',
     clear: 'Limpiar',
     sort: 'Ordenar:',
     date: 'Fecha',

@@ -4,6 +4,13 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 768px) {
+  :host {
+    width: 100% !important;
+    height: auto !important;
+    flex-shrink: 1;
+  }
+}
 .thread-panel {
   width: 100%;
   height: 100%;

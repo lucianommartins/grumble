@@ -190,7 +190,7 @@ export const ptBR: LocaleStrings = {
   login: {
     welcome: 'Bem-vindo ao',
     appName: 'DevPulse',
-    tagline: 'Transforme conteúdo em threads virais para o Twitter',
+    tagline: 'Transforme conteúdo em threads engajadoras para o Twitter',
     feature1Title: 'Multi-fonte',
     feature1Desc: 'Agregue Twitter, RSS e blogs',
     feature2Title: 'IA Avançada',

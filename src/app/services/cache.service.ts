@@ -1,19 +1,42 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
+import { Firestore, doc, setDoc, getDocs, deleteDoc, collection, Timestamp, writeBatch, query, where } from '@angular/fire/firestore';
 import { CachedItem, FeedItem } from '../models/feed.model';
+import { AuthService } from './auth.service';
+import { LoggerService } from './logger.service';
 
 const DB_NAME = 'devpulse-cache';
 const DB_VERSION = 1;
 const STORE_NAME = 'cached-items';
+const FIRESTORE_COLLECTION = 'cachedItems';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CacheService {
+  private firestore = inject(Firestore);
+  private authService = inject(AuthService);
+  private logger = inject(LoggerService);
+
   private db: IDBDatabase | null = null;
   private isReady = signal(false);
+  private currentUserId: string | null = null;
+  private firestoreSyncPending: CachedItem[] = [];
+  private firestoreSyncInProgress = false;
 
   constructor() {
     this.initDatabase();
+
+    // Sync with Firestore when user logs in
+    effect(() => {
+      const user = this.authService.currentUser();
+      if (user && user.uid !== this.currentUserId) {
+        this.currentUserId = user.uid;
+        // Sync from Firestore to IndexedDB on new device
+        setTimeout(() => this.syncFromFirestore(), 100);
+      } else if (!user) {
+        this.currentUserId = null;
+      }
+    });
   }
 
   private async initDatabase(): Promise<void> {
@@ -43,6 +66,104 @@ export class CacheService {
   private async ensureReady(): Promise<void> {
     if (!this.db) {
       await this.initDatabase();
+    }
+  }
+
+  /**
+   * Sync cached items FROM Firestore TO IndexedDB (for new devices)
+   */
+  private async syncFromFirestore(): Promise<void> {
+    if (!this.currentUserId) return;
+
+    try {
+      const collectionRef = collection(
+        this.firestore,
+        `users/${this.currentUserId}/${FIRESTORE_COLLECTION}`
+      );
+
+      const snapshot = await getDocs(collectionRef);
+      const firestoreItems: CachedItem[] = [];
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data) {
+          firestoreItems.push({
+            id: docSnap.id,
+            data: data['data'] as FeedItem,
+            cachedAt: data['cachedAt']?.toDate?.() || new Date(data['cachedAt']),
+            expiresAt: data['expiresAt']?.toDate?.() || new Date(data['expiresAt'])
+          });
+        }
+      });
+
+      if (firestoreItems.length > 0) {
+        await this.ensureReady();
+        const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+
+        let addedCount = 0;
+        for (const item of firestoreItems) {
+          // Only add if not expired
+          if (new Date(item.expiresAt) > new Date()) {
+            // Check if already exists
+            const existing = await this.checkExists(store, item.id);
+            if (!existing) {
+              store.put(item);
+              addedCount++;
+            }
+          }
+        }
+
+        this.logger.info('CacheService', `Synced ${addedCount} items from Firestore`);
+      }
+    } catch (error) {
+      this.logger.error('CacheService', 'Failed to sync from Firestore:', error);
+    }
+  }
+
+  private checkExists(store: IDBObjectStore, id: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const request = store.get(id);
+      request.onsuccess = () => resolve(!!request.result);
+      request.onerror = () => resolve(false);
+    });
+  }
+
+  /**
+   * Sync pending items TO Firestore (batched for efficiency)
+   */
+  private async flushToFirestore(): Promise<void> {
+    if (!this.currentUserId || this.firestoreSyncPending.length === 0 || this.firestoreSyncInProgress) {
+      return;
+    }
+
+    this.firestoreSyncInProgress = true;
+    const itemsToSync = [...this.firestoreSyncPending];
+    this.firestoreSyncPending = [];
+
+    try {
+      const batch = writeBatch(this.firestore);
+
+      for (const item of itemsToSync) {
+        const docRef = doc(
+          this.firestore,
+          `users/${this.currentUserId}/${FIRESTORE_COLLECTION}/${item.id}`
+        );
+        batch.set(docRef, {
+          data: item.data,
+          cachedAt: Timestamp.fromDate(new Date(item.cachedAt)),
+          expiresAt: Timestamp.fromDate(new Date(item.expiresAt))
+        });
+      }
+
+      await batch.commit();
+      this.logger.debug('CacheService', `Flushed ${itemsToSync.length} items to Firestore`);
+    } catch (error) {
+      this.logger.error('CacheService', 'Failed to flush to Firestore:', error);
+      // Re-add failed items to pending queue
+      this.firestoreSyncPending.push(...itemsToSync);
+    } finally {
+      this.firestoreSyncInProgress = false;
     }
   }
 
@@ -82,7 +203,7 @@ export class CacheService {
   }
 
   /**
-   * Store item in cache
+   * Store item in cache (IndexedDB + Firestore)
    */
   async set(item: FeedItem, ttlHours: number = 168): Promise<void> {
     await this.ensureReady();
@@ -93,13 +214,27 @@ export class CacheService {
       expiresAt: new Date(Date.now() + ttlHours * 60 * 60 * 1000)
     };
 
-    return new Promise((resolve, reject) => {
+    // Save to IndexedDB (fast, local)
+    await new Promise<void>((resolve, reject) => {
       const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.put(cachedItem);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
+
+    // Queue for Firestore sync (async, batched)
+    if (this.currentUserId) {
+      this.firestoreSyncPending.push(cachedItem);
+
+      // Flush every 50 items or after 2 seconds
+      if (this.firestoreSyncPending.length >= 50) {
+        this.flushToFirestore();
+      } else {
+        // Debounce flush
+        setTimeout(() => this.flushToFirestore(), 2000);
+      }
+    }
   }
 
   /**
@@ -107,13 +242,28 @@ export class CacheService {
    */
   async delete(id: string): Promise<void> {
     await this.ensureReady();
-    return new Promise((resolve, reject) => {
+
+    // Delete from IndexedDB
+    await new Promise<void>((resolve, reject) => {
       const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.delete(id);
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
+
+    // Delete from Firestore
+    if (this.currentUserId) {
+      try {
+        const docRef = doc(
+          this.firestore,
+          `users/${this.currentUserId}/${FIRESTORE_COLLECTION}/${id}`
+        );
+        await deleteDoc(docRef);
+      } catch (error) {
+        this.logger.warn('CacheService', 'Failed to delete from Firestore:', error);
+      }
+    }
   }
 
   /**
@@ -164,15 +314,18 @@ export class CacheService {
   }
 
   /**
-   * Clear expired items from cache
+   * Clear expired items from cache (IndexedDB + Firestore)
    */
   async clearExpired(): Promise<number> {
     await this.ensureReady();
-    return new Promise((resolve) => {
+
+    const expiredIds: string[] = [];
+
+    const deleted = await new Promise<number>((resolve) => {
       const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAll();
-      let deleted = 0;
+      let deletedCount = 0;
 
       request.onsuccess = () => {
         const items = request.result as CachedItem[];
@@ -180,13 +333,33 @@ export class CacheService {
         items.forEach(item => {
           if (new Date(item.expiresAt) <= now) {
             store.delete(item.id);
-            deleted++;
+            expiredIds.push(item.id);
+            deletedCount++;
           }
         });
-        resolve(deleted);
+        resolve(deletedCount);
       };
       request.onerror = () => resolve(0);
     });
+
+    // Also delete from Firestore
+    if (this.currentUserId && expiredIds.length > 0) {
+      try {
+        const batch = writeBatch(this.firestore);
+        for (const id of expiredIds.slice(0, 500)) { // Firestore batch limit
+          const docRef = doc(
+            this.firestore,
+            `users/${this.currentUserId}/${FIRESTORE_COLLECTION}/${id}`
+          );
+          batch.delete(docRef);
+        }
+        await batch.commit();
+      } catch (error) {
+        this.logger.warn('CacheService', 'Failed to clear expired from Firestore:', error);
+      }
+    }
+
+    return deleted;
   }
 
   /**
@@ -194,12 +367,17 @@ export class CacheService {
    */
   async clearAll(): Promise<void> {
     await this.ensureReady();
-    return new Promise((resolve, reject) => {
+
+    // Clear IndexedDB
+    await new Promise<void>((resolve, reject) => {
       const transaction = this.db!.transaction(STORE_NAME, 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.clear();
       request.onsuccess = () => resolve();
       request.onerror = () => reject(request.error);
     });
+
+    // Note: We don't clear Firestore here to allow sync back if user cleared by mistake
+    this.logger.info('CacheService', 'Cleared local cache');
   }
 }

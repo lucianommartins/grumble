@@ -101,7 +101,7 @@ export const de: LocaleStrings = {
     justNow: 'jetzt',
     alsoIn: 'Auch in:',
     confirmDelete: 'Eliminar {count} elementos seleccionados?',
-    selectAll: 'Seleccionar todos',
+    selectAll: 'Alle auswählen',
     clear: 'Limpiar',
     sort: 'Ordenar:',
     date: 'Fecha',
