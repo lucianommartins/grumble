@@ -10,6 +10,7 @@ import { UserSettingsService } from './user-settings.service';
 import { I18nService } from '../i18n';
 import { Platform, PlatformContent } from '../models/platform-content.model';
 import { LoggerService } from './logger.service';
+import { StatsService } from './stats.service';
 
 // Modular imports
 import { buildPlatformPrompt, buildTwitterPrompt, buildRegenerateTweetPrompt } from './gemini/platform-prompts';
@@ -36,6 +37,7 @@ export class GeminiService {
   private userSettings = inject(UserSettingsService);
   private i18n = inject(I18nService);
   private logger = inject(LoggerService);
+  private stats = inject(StatsService);
 
   private readonly API_BASE = '/api/gemini';
 
@@ -87,7 +89,9 @@ export class GeminiService {
 
     try {
       const text = await this.callGeminiApi(prompt, additionalUrls);
-      return parseThreadResponse(text, items);
+      const result = parseThreadResponse(text, items);
+      this.stats.incrementContentCreated();
+      return result;
     } catch (error) {
       this.logger.error('GeminiService', 'Error generating thread:', error);
       throw new Error('Falha ao gerar thread. Verifique sua API key do Gemini.');
@@ -137,7 +141,9 @@ export class GeminiService {
 
     try {
       const text = await this.callGeminiApi(prompt, additionalUrls);
-      return parsePlatformResponse(platform, text, items);
+      const result = parsePlatformResponse(platform, text, items);
+      this.stats.incrementContentCreated();
+      return result;
     } catch (error) {
       this.logger.error('GeminiService', `Error generating ${platform} content:`, error);
       throw new Error(`Failed to generate ${platform} content.`);

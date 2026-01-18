@@ -187,6 +187,8 @@ export const zh: LocaleStrings = {
   header: {
     poweredBy: '由 Gemini 3.0 Flash 驱动',
     settings: '设置',
+    contentCreated: '所有用户创建的内容',
+    contentsGenerated: '内容已生成',
   },
 
   // 登录

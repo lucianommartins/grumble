@@ -8,6 +8,7 @@ import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dial
 import { AuthService } from './services/auth.service';
 import { SyncService } from './services/sync.service';
 import { I18nService } from './i18n';
+import { StatsService } from './services/stats.service';
 import { CommonModule } from '@angular/common';
 
 const LAYOUT_STORAGE_KEY = 'devpulse_layout';
@@ -30,6 +31,7 @@ export class App implements OnInit, OnDestroy {
   authService = inject(AuthService);
   syncService = inject(SyncService);
   i18n = inject(I18nService);
+  stats = inject(StatsService);
   showSettings = signal(false);
 
   // Mobile tab navigation

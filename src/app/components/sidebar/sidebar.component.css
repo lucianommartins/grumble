@@ -7,8 +7,9 @@
 @media (max-width: 768px) {
   :host {
     width: 100% !important;
-    height: auto !important;
-    flex-shrink: 1;
+    height: 100% !important;
+      flex: 1;
+      overflow-y: auto;
   }
 }
 .sidebar {
@@ -482,4 +483,36 @@
     padding: var(--spacing-xs);
     font-size: 14px;
   }
+.stats-counter {
+  display: none;
+}
+}
+
+/* Stats Counter */
+.stats-counter {
+  margin-top: auto;
+  padding-top: var(--spacing-md);
+}
+
+.counter-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.counter-badge .counter-value {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+  color: var(--color-accent);
+}
+
+.counter-badge .counter-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
 }

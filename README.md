@@ -191,8 +191,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Usuários só podem acessar seus próprios dados
-    match /users/{userId}/{document=**} {
+    match /users/{userId}/{subcollection}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Estatísticas globais - qualquer usuário autenticado pode ler/incrementar
+    match /stats/{statId} {
+      allow read, write: if request.auth != null;
+    }
+    // Bloqueia todo o resto
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

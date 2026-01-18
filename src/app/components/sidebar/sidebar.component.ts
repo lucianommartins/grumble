@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FeedService } from '../../services/feed.service';
 import { SyncService } from '../../services/sync.service';
 import { UserSettingsService } from '../../services/user-settings.service';
+import { StatsService } from '../../services/stats.service';
 import { I18nService } from '../../i18n';
 import { Feed } from '../../models/feed.model';
 
@@ -18,6 +19,7 @@ export class SidebarComponent {
   feedService = inject(FeedService);
   syncService = inject(SyncService);
   userSettings = inject(UserSettingsService);
+  stats = inject(StatsService);
   i18n = inject(I18nService);
   common = this.i18n.t.common;
 

@@ -113,4 +113,13 @@
       <li>{{ i18n.t.sidebar.howStep3 }}</li>
     </ul>
   </section>
+<!-- Global Stats Counter -->
+@if (stats.contentCreated() > 0) {
+<section class="stats-counter">
+  <div class="counter-badge">
+    <span class="counter-value">{{ stats.contentCreated() | number }}</span>
+    <span class="counter-label">{{ i18n.t.header.contentsGenerated || 'contents generated' }}</span>
+  </div>
+</section>
+}
 </aside>

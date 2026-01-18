@@ -162,6 +162,37 @@
 .settings-btn:hover {
   opacity: 1;
 }
+/* Content Counter */
+.content-counter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: default;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+}
+
+.counter-icon {
+  font-size: 16px;
+}
+
+.counter-value {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+  color: var(--color-accent);
+  text-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+.counter-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-normal);
+}
 /* Mobile Responsive Styles */
 @media (max-width: 768px) {
   .app-header {

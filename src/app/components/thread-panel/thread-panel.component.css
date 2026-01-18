@@ -7,8 +7,9 @@
 @media (max-width: 768px) {
   :host {
     width: 100% !important;
-    height: auto !important;
-    flex-shrink: 1;
+    height: 100% !important;
+      flex: 1;
+      overflow-y: auto;
   }
 }
 .thread-panel {

@@ -187,6 +187,8 @@ export const fr: LocaleStrings = {
   header: {
     poweredBy: 'Propulsé par Gemini 3.0 Flash',
     settings: 'Paramètres',
+    contentCreated: 'Contenus créés par tous les utilisateurs',
+    contentsGenerated: 'contenus générés',
   },
 
   // Connexion

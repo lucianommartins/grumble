@@ -31,8 +31,9 @@ export class CacheService {
       const user = this.authService.currentUser();
       if (user && user.uid !== this.currentUserId) {
         this.currentUserId = user.uid;
+        this.logger.info('CacheService', `User logged in: ${user.uid}, syncing from Firestore...`);
         // Sync from Firestore to IndexedDB on new device
-        setTimeout(() => this.syncFromFirestore(), 100);
+        setTimeout(() => this.syncFromFirestore(), 500);
       } else if (!user) {
         this.currentUserId = null;
       }
@@ -226,13 +227,14 @@ export class CacheService {
     // Queue for Firestore sync (async, batched)
     if (this.currentUserId) {
       this.firestoreSyncPending.push(cachedItem);
+      this.logger.info('CacheService', `Queued item for Firestore sync: ${item.id} (pending: ${this.firestoreSyncPending.length})`);
 
-      // Flush every 50 items or after 2 seconds
-      if (this.firestoreSyncPending.length >= 50) {
+      // Flush every 20 items or after 500ms (faster sync)
+      if (this.firestoreSyncPending.length >= 20) {
         this.flushToFirestore();
       } else {
-        // Debounce flush
-        setTimeout(() => this.flushToFirestore(), 2000);
+        // Short debounce flush
+        setTimeout(() => this.flushToFirestore(), 500);
       }
     }
   }
