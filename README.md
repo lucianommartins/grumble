@@ -2,6 +2,8 @@
 
 <div align="center">
 
+🌐 **Idiomas / Languages**: [Português](#) • [English](README.en.md) • [Español](README.es.md)
+
 ![Licença](https://img.shields.io/badge/licença-Apache%202.0-blue.svg)
 ![Angular](https://img.shields.io/badge/Angular-21.1-red.svg)
 ![Gemini](https://img.shields.io/badge/Gemini-3.0%20Flash-purple.svg)
@@ -59,6 +61,8 @@ graph TB
             ItemStateService["ItemStateService"]
             CryptoService["CryptoService"]
             I18nService["I18nService"]
+            LoggerService["LoggerService"]
+            RetryService["RetryService"]
         end
     end
 
@@ -237,14 +241,23 @@ devpulse/
 │   │       ├── auth.service.ts          # Firebase Auth
 │   │       ├── crypto.service.ts        # Criptografia AES-256-GCM
 │   │       ├── feed.service.ts          # Gerenciamento de fontes
-│   │       ├── gemini.service.ts        # Geração de threads com IA
+│   │       ├── gemini.service.ts        # Facade para geração com IA
+│   │       ├── gemini/                  # Módulos Gemini
+│   │       │   ├── platform-prompts.ts  # Prompts por plataforma
+│   │       │   └── response-parsers.ts  # Parsers de resposta
+│   │       ├── logger.service.ts        # Logging centralizado
+│   │       ├── retry.service.ts         # Retry com exponential backoff
 │   │       ├── media.service.ts         # Geração de imagem/vídeo
 │   │       ├── sync.service.ts          # Sincronização de dados
-│   │       ├── twitter.service.ts       # Cliente Twitter API com extração de vídeo
+│   │       ├── twitter.service.ts       # Cliente Twitter API
 │   │       ├── youtube.service.ts       # Cliente YouTube RSS
-│   │       ├── item-state.service.ts    # Persistência de estado usado/irrelevante
-│   │       ├── confirm-dialog.service.ts# Serviço de diálogos de confirmação
-│   │       └── user-settings.service.ts # Configurações criptografadas
+│   │       ├── item-state.service.ts    # Persistência de estado
+│   │       ├── confirm-dialog.service.ts# Serviço de diálogos
+│   │       ├── user-settings.service.ts # Configurações criptografadas
+│   │       └── __tests__/               # Testes unitários
+│   │           ├── test-utils.ts        # Utilitários de teste
+│   │           ├── feed.service.test.ts # Testes FeedService
+│   │           └── utils.service.test.ts# Testes Logger/Retry
 │   └── environments/            # Configs de ambiente
 ├── server/                      # Servidor proxy Express
 │   └── index.js                 # Rotas da API

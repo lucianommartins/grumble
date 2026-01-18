@@ -25,6 +25,11 @@
   font-size: 24px;
 }
 
+.logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+}
 .app-title {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
@@ -32,6 +37,12 @@
   margin: 0;
 }
 
+.app-title.gradient-text {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 .header-badge {
   display: flex;
   align-items: center;

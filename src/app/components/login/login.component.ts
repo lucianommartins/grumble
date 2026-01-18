@@ -12,6 +12,7 @@ import { I18nService } from '../../i18n';
     <div class="login-container">
       <div class="login-card">
         <div class="login-header">
+          <img src="/logo.png" alt="DevPulse" class="login-logo" />
           <h1 class="login-title">{{ i18n.t.login.appName }}</h1>
           <p class="login-subtitle">{{ i18n.t.login.tagline }}</p>
         </div>
@@ -109,8 +110,18 @@ import { I18nService } from '../../i18n';
     .login-title {
       font-size: 2.5rem;
       font-weight: var(--font-weight-bold);
-      color: var(--color-accent);
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       margin: 0 0 var(--spacing-sm) 0;
+    }
+
+    .login-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--spacing-md);
     }
 
     .login-subtitle {
