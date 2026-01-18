@@ -84,6 +84,7 @@ export const de: LocaleStrings = {
     showOnlyThis: 'Nur diese Quelle anzeigen',
     editSource2: 'Quelle bearbeiten',
     removeSource: 'Quelle entfernen',
+    duplicateError: 'Eine Quelle mit dieser URL existiert bereits.',
   },
 
   // Feed-Panel
@@ -99,7 +100,22 @@ export const de: LocaleStrings = {
     daysAgo: 'T',
     justNow: 'jetzt',
     alsoIn: 'Auch in:',
-    confirmDelete: '{count} ausgewählte Elemente aus dem Cache löschen?',
+    confirmDelete: 'Eliminar {count} elementos seleccionados?',
+    selectAll: 'Seleccionar todos',
+    clear: 'Limpiar',
+    sort: 'Ordenar:',
+    date: 'Fecha',
+    source: 'Fuente',
+    used: 'Usado',
+    selected: 'seleccionados',
+    list: 'Lista',
+    cards: 'Tarjetas',
+    byDate: 'Por fecha',
+    bySource: 'Por fuente',
+    deleteSelected: 'Eliminar elementos seleccionados',
+    switchToLight: 'Cambiar a Modo Claro',
+    switchToDark: 'Cambiar a Modo Oscuro',
+    feedUpdates: 'Actualizaciones de Feed',
   },
 
   // Inhalts-Panel (früher Thread-Panel)

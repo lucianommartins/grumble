@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Feed, FeedItem } from '../models/feed.model';
 import { CacheService } from './cache.service';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root'
@@ -9,6 +10,7 @@ import { CacheService } from './cache.service';
 export class ScraperService {
   private http = inject(HttpClient);
   private cache = inject(CacheService);
+  private logger = inject(LoggerService);
 
   // Use a CORS proxy for fetching pages
   private readonly CORS_PROXY = 'https://corsproxy.io/?';
@@ -37,7 +39,7 @@ export class ScraperService {
 
       // Parse article links from the listing page
       const articleUrls = this.extractArticleLinks(html, feed.url);
-      console.log(`Found ${articleUrls.length} article links from ${feed.name}`);
+      this.logger.debug('Scraper', `Found ${articleUrls.length} article links from ${feed.name}`);
 
       // Filter out already cached URLs
       const newUrls = articleUrls.filter(url => !cachedUrls.has(url));
@@ -52,7 +54,7 @@ export class ScraperService {
             await this.cache.set(item);
           }
         } catch (e) {
-          console.warn(`Error fetching article ${url}:`, e);
+          this.logger.warn('Scraper', `Error fetching article ${url}:`, e);
         }
       }
 
@@ -61,7 +63,7 @@ export class ScraperService {
         .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     } catch (error) {
-      console.error(`Error scraping blog ${feed.name}:`, error);
+      this.logger.error('Scraper', `Error scraping blog ${feed.name}:`, error);
       const startTime = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
       return this.getCachedItems(feed.id, startTime);
     }
@@ -140,8 +142,8 @@ export class ScraperService {
       }
     }
 
-    console.log(`Found ${links.size} article URLs from ${baseUrl}`);
-    console.log('Article URLs:', Array.from(links));
+    this.logger.debug('Scraper', `Found ${links.size} article URLs from ${baseUrl}`);
+    this.logger.debug('Scraper', 'Article URLs:', Array.from(links));
     return Array.from(links);
   }
 

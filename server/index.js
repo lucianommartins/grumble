@@ -16,6 +16,12 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Serve Angular static files in production
+if (process.env.NODE_ENV === 'production') {
+  const angularDistPath = join(__dirname, '..', 'dist', 'devpulse', 'browser');
+  app.use(express.static(angularDistPath));
+}
+
 // Twitter API proxy configuration
 const TWITTER_API_BASE = 'https://api.twitter.com/2';
 const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
@@ -362,6 +368,14 @@ app.all('/api/twitter/*', async (req, res) => {
     });
   }
 });
+
+// SPA fallback - serve index.html for all non-API routes (must be after API routes)
+if (process.env.NODE_ENV === 'production') {
+  app.get('*', (req, res) => {
+    const angularDistPath = join(__dirname, '..', 'dist', 'devpulse', 'browser');
+    res.sendFile(join(angularDistPath, 'index.html'));
+  });
+}
 
 // Start server
 app.listen(PORT, () => {

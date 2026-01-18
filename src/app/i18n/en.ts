@@ -82,10 +82,12 @@ export const en = {
     showOnlyThis: 'Show only this source',
     editSource2: 'Edit source',
     removeSource: 'Remove source',
+    duplicateError: 'A source with this URL already exists.',
   },
 
   // Feed Dashboard
   feed: {
+    feedUpdates: 'Feed Updates',
     loadedItems: 'items loaded',
     markIrrelevant: 'Mark as irrelevant',
     noItems: 'No items yet',
@@ -98,6 +100,20 @@ export const en = {
     justNow: 'now',
     alsoIn: 'Also in:',
     confirmDelete: 'Delete {count} selected items from cache?',
+    selectAll: 'Select all',
+    clear: 'Clear',
+    sort: 'Sort:',
+    date: 'Date',
+    source: 'Source',
+    used: 'Used',
+    selected: 'selected',
+    list: 'List',
+    cards: 'Cards',
+    byDate: 'By date',
+    bySource: 'By source',
+    deleteSelected: 'Delete selected items from cache',
+    switchToLight: 'Switch to Light Mode',
+    switchToDark: 'Switch to Dark Mode',
   },
 
   // Content Panel (formerly Thread Panel)

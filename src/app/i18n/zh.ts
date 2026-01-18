@@ -84,6 +84,7 @@ export const zh: LocaleStrings = {
     showOnlyThis: '仅显示此来源',
     editSource2: '编辑来源',
     removeSource: '移除来源',
+    duplicateError: '该URL的源已存在。',
   },
 
   // 信息流面板
@@ -99,7 +100,22 @@ export const zh: LocaleStrings = {
     daysAgo: '天前',
     justNow: '刚刚',
     alsoIn: '同时在：',
-    confirmDelete: '从缓存中删除 {count} 个选中的项目?',
+    confirmDelete: 'Eliminar {count} elementos seleccionados?',
+    selectAll: 'Seleccionar todos',
+    clear: 'Limpiar',
+    sort: 'Ordenar:',
+    date: 'Fecha',
+    source: 'Fuente',
+    used: 'Usado',
+    selected: 'seleccionados',
+    list: 'Lista',
+    cards: 'Tarjetas',
+    byDate: 'Por fecha',
+    bySource: 'Por fuente',
+    deleteSelected: 'Eliminar elementos seleccionados',
+    switchToLight: 'Cambiar a Modo Claro',
+    switchToDark: 'Cambiar a Modo Oscuro',
+    feedUpdates: 'Actualizaciones de Feed',
   },
 
   // 内容面板（原推文串面板）

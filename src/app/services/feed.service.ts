@@ -2,9 +2,12 @@ import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { Firestore, doc, setDoc, deleteDoc, collection, getDocs, writeBatch } from '@angular/fire/firestore';
 import { Feed } from '../models/feed.model';
 import { AuthService } from './auth.service';
+import { DEFAULT_FEEDS } from '../config/default-feeds';
+import { LoggerService } from './logger.service';
 
 const FEEDS_STORAGE_KEY = 'devpulse-feeds';
 const ENABLED_TYPES_KEY = 'devpulse-enabled-types';
+const DEFAULTS_INITIALIZED_KEY = 'devpulse-defaults-initialized';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +15,7 @@ const ENABLED_TYPES_KEY = 'devpulse-enabled-types';
 export class FeedService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
+  private logger = inject(LoggerService);
 
   feeds = signal<Feed[]>([]);
   isLoading = signal(false);
@@ -56,6 +60,62 @@ export class FeedService {
         this.feeds.set([]);
       }
     }
+
+    // Initialize default feeds on first run
+    this.initializeDefaultFeeds();
+  }
+
+  /**
+   * Initialize default feeds if not already done
+   */
+  private initializeDefaultFeeds(): void {
+    const alreadyInitialized = localStorage.getItem(DEFAULTS_INITIALIZED_KEY);
+    if (alreadyInitialized) return;
+
+    const currentFeeds = this.feeds();
+    let addedCount = 0;
+
+    for (const defaultFeed of DEFAULT_FEEDS) {
+      // Check if a feed with same URL already exists
+      if (!this.feedExistsByUrl(defaultFeed.url)) {
+        const newFeed: Feed = {
+          ...defaultFeed,
+          id: this.generateId(),
+          createdAt: new Date()
+        };
+        currentFeeds.push(newFeed);
+        addedCount++;
+      }
+    }
+
+    if (addedCount > 0) {
+      this.feeds.set(currentFeeds);
+      this.saveToLocalStorage();
+      this.logger.info('FeedService', `Initialized ${addedCount} default feeds`);
+    }
+
+    localStorage.setItem(DEFAULTS_INITIALIZED_KEY, 'true');
+  }
+
+  /**
+   * Normalize URL for comparison (handles http/https, www, trailing slashes)
+   */
+  private normalizeUrl(url: string): string {
+    return url
+      .toLowerCase()
+      .replace(/^https?:\/\//, '')
+      .replace(/^www\./, '')
+      .replace(/\/$/, '')
+      .replace(/^@/, '')  // Twitter handles
+      .trim();
+  }
+
+  /**
+   * Check if a feed with the same URL already exists
+   */
+  feedExistsByUrl(url: string): boolean {
+    const normalizedUrl = this.normalizeUrl(url);
+    return this.feeds().some(f => this.normalizeUrl(f.url) === normalizedUrl);
   }
 
   /**
@@ -93,7 +153,7 @@ export class FeedService {
       await this.syncLocalFeedsToFirestore(userId, mergedFeeds);
 
       this.firestoreInitialized = true;
-      console.log(`[FeedService] Synced ${mergedFeeds.length} feeds with Firestore`);
+      this.logger.info('FeedService', `Synced ${mergedFeeds.length} feeds with Firestore`);
     } catch (error) {
       console.error('[FeedService] Firestore sync failed, using local:', error);
     } finally {
@@ -204,7 +264,13 @@ export class FeedService {
     return `feed_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
-  addFeed(feed: Omit<Feed, 'id' | 'createdAt'>): Feed {
+  addFeed(feed: Omit<Feed, 'id' | 'createdAt'>): Feed | null {
+    // Check for duplicates
+    if (this.feedExistsByUrl(feed.url)) {
+      console.warn(`[FeedService] Feed with URL "${feed.url}" already exists`);
+      return null;
+    }
+
     const newFeed: Feed = {
       ...feed,
       id: this.generateId(),

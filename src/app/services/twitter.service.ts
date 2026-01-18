@@ -3,6 +3,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Feed, FeedItem } from '../models/feed.model';
 import { CacheService } from './cache.service';
 import { UserSettingsService } from './user-settings.service';
+import { RetryService } from './retry.service';
+import { LoggerService } from './logger.service';
 
 interface TwitterUser {
   id: string;
@@ -17,6 +19,27 @@ interface TwitterTweet {
   author_id: string;
   attachments?: {
     media_keys?: string[];
+  };
+  entities?: {
+    urls?: Array<{
+      url: string;
+      expanded_url: string;
+      display_url: string;
+      title?: string;
+      unwound_url?: string;
+      description?: string;
+    }>;
+  };
+  note_tweet?: {
+    text: string;
+    entities?: {
+      urls?: Array<{
+        url: string;
+        expanded_url: string;
+        title?: string;
+        description?: string;
+      }>;
+    };
   };
 }
 
@@ -52,6 +75,8 @@ export class TwitterService {
   private http = inject(HttpClient);
   private cache = inject(CacheService);
   private userSettings = inject(UserSettingsService);
+  private retryService = inject(RetryService);
+  private logger = inject(LoggerService);
 
   // Use proxy server to avoid CORS issues
   private readonly API_BASE = '/api/twitter';
@@ -84,7 +109,7 @@ export class TwitterService {
       // First, get user ID
       const userId = await this.getUserId(username);
       if (!userId) {
-        console.warn(`Could not find Twitter user: ${username}`);
+        this.logger.warn('Twitter', `Could not find Twitter user: ${username}`);
         return [];
       }
 
@@ -108,7 +133,7 @@ export class TwitterService {
         .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
     } catch (error) {
-      console.error(`Error fetching tweets for ${username}:`, error);
+      this.logger.error('Twitter', `Error fetching tweets for ${username}:`, error);
       // Return cached items on error
       const startTime = new Date(Date.now() - hoursAgo * 60 * 60 * 1000);
       return this.getCachedTweets(feed.id, startTime);
@@ -134,7 +159,7 @@ export class TwitterService {
     startTime: Date
   ): Promise<FeedItem[]> {
     const params = new URLSearchParams({
-      'tweet.fields': 'created_at,author_id,attachments',
+      'tweet.fields': 'created_at,author_id,attachments,entities,note_tweet',
       'expansions': 'author_id,attachments.media_keys',
       'media.fields': 'url,preview_image_url,type,variants',
       'user.fields': 'name,username',
@@ -159,7 +184,7 @@ export class TwitterService {
       const media = new Map<string, TwitterMedia>();
       response.includes?.media?.forEach(m => media.set(m.media_key, m));
 
-      return response.data.map(tweet => {
+      const items: FeedItem[] = response.data.map(tweet => {
         const author = users.get(tweet.author_id);
         const mediaUrls = tweet.attachments?.media_keys
           ?.flatMap(key => {
@@ -187,12 +212,31 @@ export class TwitterService {
             return m.url ? [m.url] : [];
           }) || [];
 
+        // For long tweets/articles, use note_tweet.text; otherwise use regular text
+        let rawText = tweet.note_tweet?.text || tweet.text;
+
+        // Get URL entities from note_tweet if available, otherwise from regular entities
+        const urlEntities = tweet.note_tweet?.entities?.urls || tweet.entities?.urls || [];
+
+        // Expand t.co URLs with title > description > expanded_url
+        let expandedText = rawText;
+        for (const urlEntity of urlEntities) {
+          let replacement = urlEntity.title || urlEntity.description || urlEntity.expanded_url;
+
+          // If it's an article URL with no title (API returns status 500), show emoji indicator
+          if (replacement.match(/x\.com\/i\/article\/|twitter\.com\/i\/article\//)) {
+            replacement = '📄 Twitter Article';
+          }
+
+          expandedText = expandedText.replace(urlEntity.url, replacement);
+        }
+
         return {
           id: `twitter_${tweet.id}`,
           feedId: feed.id,
           feedName: feed.name,
           feedType: 'twitter' as const,
-          content: tweet.text,
+          content: expandedText,
           author: author?.name || username,
           authorHandle: `@${author?.username || username}`,
           publishedAt: new Date(tweet.created_at),
@@ -201,6 +245,8 @@ export class TwitterService {
           selected: false
         };
       });
+
+      return items;
     } catch (error) {
       console.error('Error fetching tweets:', error);
       return [];

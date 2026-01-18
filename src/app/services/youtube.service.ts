@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Feed, FeedItem } from '../models/feed.model';
 import { CacheService } from './cache.service';
+import { LoggerService } from './logger.service';
 
 interface YouTubeRSSItem {
   id: string;
@@ -20,6 +21,7 @@ interface YouTubeRSSItem {
 export class YouTubeService {
   private http = inject(HttpClient);
   private cache = inject(CacheService);
+  private logger = inject(LoggerService);
 
   /**
    * Fetch videos from a YouTube channel via RSS
@@ -54,7 +56,7 @@ export class YouTubeService {
       const doc = parser.parseFromString(response, 'text/xml');
       const entries = doc.querySelectorAll('entry');
 
-      console.log(`[YouTube] Found ${entries.length} entries in RSS feed for ${feed.name}`);
+      this.logger.debug('YouTube', `Found ${entries.length} entries in RSS feed for ${feed.name}`);
 
       const items: FeedItem[] = [];
 
@@ -69,7 +71,7 @@ export class YouTubeService {
         }
 
         if (!videoId) {
-          console.warn(`[YouTube] Could not extract video ID from entry ${idx}`);
+          this.logger.warn('YouTube', `Could not extract video ID from entry ${idx}`);
           return;
         }
 
@@ -81,11 +83,11 @@ export class YouTubeService {
         const publishedEl = entry.querySelector('published');
         const published = new Date(publishedEl?.textContent || '');
 
-        console.log(`[YouTube] Video ${videoId} published: ${published.toISOString()}, startTime: ${startTime.toISOString()}`);
+        this.logger.debug('YouTube', `Video ${videoId} published: ${published.toISOString()}, startTime: ${startTime.toISOString()}`);
 
         // Skip if outside time window
         if (published < startTime) {
-          console.log(`[YouTube] Skipping video ${videoId} - outside time window`);
+          this.logger.debug('YouTube', `Skipping video ${videoId} - outside time window`);
           return;
         }
 
@@ -116,7 +118,7 @@ export class YouTubeService {
           selected: false
         };
 
-        console.log(`[YouTube] Added video: ${title}`);
+        this.logger.debug('YouTube', `Added video: ${title}`);
         items.push(item);
       });
 

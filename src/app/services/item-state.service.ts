@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { Firestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, writeBatch } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
+import { LoggerService } from './logger.service';
 
 /**
  * Interface for item state stored in Firestore
@@ -24,6 +25,7 @@ export interface ItemState {
 export class ItemStateService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
+  private logger = inject(LoggerService);
 
   // Local cache of item states
   private statesCache = signal<Map<string, ItemState>>(new Map());
@@ -82,9 +84,9 @@ export class ItemStateService {
       });
       
       this.statesCache.set(states);
-      console.log(`[ItemStateService] Loaded ${states.size} item states`);
+      this.logger.debug('ItemStateService', `Loaded ${states.size} item states`);
     } catch (error) {
-      console.error('[ItemStateService] Failed to load states:', error);
+      this.logger.error('ItemStateService', 'Failed to load states:', error);
     } finally {
       this.isLoading.set(false);
     }
@@ -161,9 +163,9 @@ export class ItemStateService {
         return newCache;
       });
       
-      console.log(`[ItemStateService] Marked ${itemHashes.length} items as used`);
+      this.logger.info('ItemStateService', `Marked ${itemHashes.length} items as used`);
     } catch (error) {
-      console.error('[ItemStateService] Batch update failed:', error);
+      this.logger.error('ItemStateService', 'Batch update failed:', error);
       throw error;
     }
   }
@@ -174,7 +176,7 @@ export class ItemStateService {
   private async updateState(itemHash: string, updates: Partial<ItemState>): Promise<void> {
     const userId = this.currentUserId;
     if (!userId) {
-      console.warn('[ItemStateService] No user logged in');
+      this.logger.warn('ItemStateService', 'No user logged in');
       return;
     }
 
@@ -200,7 +202,7 @@ export class ItemStateService {
         return newCache;
       });
     } catch (error) {
-      console.error('[ItemStateService] Failed to update state:', error);
+      this.logger.error('ItemStateService', 'Failed to update state:', error);
       throw error;
     }
   }
@@ -223,7 +225,7 @@ export class ItemStateService {
         return newCache;
       });
     } catch (error) {
-      console.error('[ItemStateService] Failed to clear state:', error);
+      this.logger.error('ItemStateService', 'Failed to clear state:', error);
     }
   }
 

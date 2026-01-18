@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="dashboard-header">
     <div class="header-left">
-      <h2 class="dashboard-title">Feed Updates</h2>
+      <h2 class="dashboard-title">{{ i18n.t.feed.feedUpdates }}</h2>
       @if (items().length > 0) {
       <span class="item-count">{{ items().length }} {{ i18n.t.feed.loadedItems }}</span>
       }
@@ -10,39 +10,41 @@
     <div class="header-actions">
       @if (items().length > 0) {
       <div class="view-toggle">
-        <button class="view-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')" title="List">
+        <button class="view-btn" [class.active]="viewMode() === 'list'" (click)="viewMode.set('list')"
+          [title]="i18n.t.feed.list">
           ☰
         </button>
-        <button class="view-btn" [class.active]="viewMode() === 'cards'" (click)="viewMode.set('cards')" title="Cards">
+        <button class="view-btn" [class.active]="viewMode() === 'cards'" (click)="viewMode.set('cards')"
+          [title]="i18n.t.feed.cards">
           ▦
         </button>
       </div>
       <div class="sort-toggle">
-        <span class="sort-label">Sort:</span>
-        <button class="sort-btn" [class.active]="sortBy() === 'date'" (click)="sortBy.set('date')" title="By date">
-          Date
+        <span class="sort-label">{{ i18n.t.feed.sort }}</span>
+        <button class="sort-btn" [class.active]="sortBy() === 'date'" (click)="sortBy.set('date')" [title]="i18n.t.feed.byDate">
+          {{ i18n.t.feed.date }}
         </button>
         <button class="sort-btn" [class.active]="sortBy() === 'source'" (click)="sortBy.set('source')"
-          title="By source">
-          Source
+          [title]="i18n.t.feed.bySource">
+          {{ i18n.t.feed.source }}
         </button>
       </div>
-      <button class="btn btn-ghost" (click)="selectAll()">Select all</button>
-      <button class="btn btn-ghost" (click)="deselectAll()">Clear</button>
+      <button class="btn btn-ghost" (click)="selectAll()">{{ i18n.t.feed.selectAll }}</button>
+      <button class="btn btn-ghost" (click)="deselectAll()">{{ i18n.t.feed.clear }}</button>
       <button class="filter-btn" [class.active]="hideUsed()" (click)="hideUsed.set(!hideUsed())"
         [title]="i18n.t.feed.hideUsedItems">
-        {{ hideUsed() ? '👁️' : '👁️‍🗨️' }} Used
+        {{ hideUsed() ? '👁️' : '👁️‍🗨️' }} {{ i18n.t.feed.used }}
       </button>
       @if (selectedCount() > 0) {
-      <span class="selected-badge">{{ selectedCount() }} selected</span>
-      <button class="filter-btn" (click)="deleteSelected()" title="Delete selected items from cache">
+      <span class="selected-badge">{{ selectedCount() }} {{ i18n.t.feed.selected }}</span>
+      <button class="filter-btn" (click)="deleteSelected()" [title]="i18n.t.feed.deleteSelected">
         🗑️
       </button>
       }
       }
       <!-- Theme toggle always visible -->
       <button class="theme-btn" (click)="toggleTheme()"
-        [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+        [title]="themeService.isDark() ? i18n.t.feed.switchToLight : i18n.t.feed.switchToDark">
         {{ themeService.isDark() ? '☀️' : '🌙' }}
       </button>
     </div>

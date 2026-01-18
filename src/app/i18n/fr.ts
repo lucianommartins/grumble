@@ -84,6 +84,7 @@ export const fr: LocaleStrings = {
     showOnlyThis: 'Afficher uniquement cette source',
     editSource2: 'Modifier la source',
     removeSource: 'Supprimer la source',
+    duplicateError: 'Une source avec cette URL existe déjà.',
   },
 
   // Panneau de Flux
@@ -99,7 +100,22 @@ export const fr: LocaleStrings = {
     daysAgo: 'j',
     justNow: 'maintenant',
     alsoIn: 'Aussi dans :',
-    confirmDelete: 'Supprimer {count} éléments sélectionnés du cache?',
+    confirmDelete: 'Eliminar {count} elementos seleccionados?',
+    selectAll: 'Seleccionar todos',
+    clear: 'Limpiar',
+    sort: 'Ordenar:',
+    date: 'Fecha',
+    source: 'Fuente',
+    used: 'Usado',
+    selected: 'seleccionados',
+    list: 'Lista',
+    cards: 'Tarjetas',
+    byDate: 'Por fecha',
+    bySource: 'Por fuente',
+    deleteSelected: 'Eliminar elementos seleccionados',
+    switchToLight: 'Cambiar a Modo Claro',
+    switchToDark: 'Cambiar a Modo Oscuro',
+    feedUpdates: 'Actualizaciones de Feed',
   },
 
   // Panneau de Contenu (anciennement Panneau de Thread)

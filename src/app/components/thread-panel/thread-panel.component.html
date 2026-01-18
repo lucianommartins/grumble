@@ -37,8 +37,13 @@
       <div class="media-assets-container">
         <div class="media-assets-header">
           <h3>🎨 {{ i18n.t.media.assetsTitle }}</h3>
-          <p class="linkedin-hint">💡 {{ i18n.t.media.linkedinHint }}</p>
-        </div>
+          <div class="thread-actions">
+            <button class="btn btn-ghost" (click)="clearAllContent()">
+              ✕ {{ i18n.t.common.close }}
+            </button>
+          </div>
+          </div>
+        <p class="linkedin-hint">💡 {{ i18n.t.media.linkedinHint }}</p>
       
         <!-- Original Feed Media -->
         @if (getOriginalMedia().length > 0) {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, Output, EventEmitter } from '@angular/core';
+import { Component, inject, signal, computed, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeedService } from '../../services/feed.service';
@@ -30,7 +30,14 @@ export class SidebarComponent {
   newFeedType = signal<Feed['type']>('twitter');
 
   get feeds() {
-    return this.feedService.feeds;
+    // Sort feeds: first by type (alphabetically), then by name (alphabetically)
+    return computed(() => {
+      return [...this.feedService.feeds()].sort((a, b) => {
+        const typeCompare = a.type.localeCompare(b.type);
+        if (typeCompare !== 0) return typeCompare;
+        return a.name.localeCompare(b.name);
+      });
+    });
   }
 
   get timeWindow() {
@@ -191,13 +198,18 @@ export class SidebarComponent {
         type: this.newFeedType()
       });
     } else {
-      // Add new feed
-      this.feedService.addFeed({
+      // Add new feed (returns null if duplicate)
+      const result = this.feedService.addFeed({
         name: this.newFeedName(),
         url: this.newFeedUrl(),
         type: this.newFeedType(),
         enabled: true
       });
+
+      if (!result) {
+        alert(this.i18n.t.sidebar?.duplicateError || 'A source with this URL already exists.');
+        return;
+      }
     }
 
     this.cancelAddForm();

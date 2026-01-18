@@ -84,6 +84,7 @@ export const es: LocaleStrings = {
     showOnlyThis: 'Mostrar solo esta fuente',
     editSource2: 'Editar fuente',
     removeSource: 'Eliminar fuente',
+    duplicateError: 'Ya existe una fuente con esta URL.',
   },
 
   // Panel de Feed
@@ -99,7 +100,22 @@ export const es: LocaleStrings = {
     daysAgo: 'd hace',
     justNow: 'ahora',
     alsoIn: 'También en:',
-    confirmDelete: '¿Eliminar {count} elementos seleccionados del caché?',
+    confirmDelete: 'Eliminar {count} elementos seleccionados?',
+    selectAll: 'Seleccionar todos',
+    clear: 'Limpiar',
+    sort: 'Ordenar:',
+    date: 'Fecha',
+    source: 'Fuente',
+    used: 'Usado',
+    selected: 'seleccionados',
+    list: 'Lista',
+    cards: 'Tarjetas',
+    byDate: 'Por fecha',
+    bySource: 'Por fuente',
+    deleteSelected: 'Eliminar elementos seleccionados',
+    switchToLight: 'Cambiar a Modo Claro',
+    switchToDark: 'Cambiar a Modo Oscuro',
+    feedUpdates: 'Actualizaciones de Feed',
   },
 
   // Panel de Contenido (antes Panel de Hilo)

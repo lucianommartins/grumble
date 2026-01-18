@@ -7,6 +7,8 @@ import { ScraperService } from './scraper.service';
 import { YouTubeService } from './youtube.service';
 import { CacheService } from './cache.service';
 import { ItemStateService } from './item-state.service';
+import { UserSettingsService } from './user-settings.service';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +21,8 @@ export class SyncService {
   private youtubeService = inject(YouTubeService);
   private cacheService = inject(CacheService);
   private itemStateService = inject(ItemStateService);
+  private userSettings = inject(UserSettingsService);
+  private logger = inject(LoggerService);
 
   // State
   items = signal<FeedItem[]>([]);
@@ -129,6 +133,11 @@ export class SyncService {
   private async fetchFeed(feed: Feed, hours: number): Promise<FeedItem[]> {
     switch (feed.type) {
       case 'twitter':
+        // Skip Twitter feeds if no bearer token configured
+        if (!this.userSettings.getTwitterBearerToken()) {
+          this.logger.info('Sync', `Skipping Twitter feed '${feed.name}' - no bearer token configured`);
+          return [];
+        }
         return this.twitterService.fetchTweets(feed, hours);
       case 'rss':
         return this.rssService.fetchFeed(feed, hours);
@@ -247,7 +256,7 @@ export class SyncService {
       await this.cacheService.delete(itemId);
     }
 
-    console.log(`[SyncService] Deleted ${itemIds.length} items from cache`);
+    this.logger.info('SyncService', `Deleted ${itemIds.length} items from cache`);
   }
 
   /**

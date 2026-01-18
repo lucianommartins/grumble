@@ -84,6 +84,7 @@ export const ja: LocaleStrings = {
     showOnlyThis: 'このソースのみ表示',
     editSource2: 'ソースを編集',
     removeSource: 'ソースを削除',
+    duplicateError: 'このURLのソースは既に存在します。',
   },
 
   // フィードパネル
@@ -99,7 +100,22 @@ export const ja: LocaleStrings = {
     daysAgo: '日前',
     justNow: 'たった今',
     alsoIn: 'その他：',
-    confirmDelete: 'キャッシュから {count} 件の選択した項目を削除しますか?',
+    confirmDelete: 'Eliminar {count} elementos seleccionados?',
+    selectAll: 'Seleccionar todos',
+    clear: 'Limpiar',
+    sort: 'Ordenar:',
+    date: 'Fecha',
+    source: 'Fuente',
+    used: 'Usado',
+    selected: 'seleccionados',
+    list: 'Lista',
+    cards: 'Tarjetas',
+    byDate: 'Por fecha',
+    bySource: 'Por fuente',
+    deleteSelected: 'Eliminar elementos seleccionados',
+    switchToLight: 'Cambiar a Modo Claro',
+    switchToDark: 'Cambiar a Modo Oscuro',
+    feedUpdates: 'Actualizaciones de Feed',
   },
 
   // コンテンツパネル（旧スレッドパネル）

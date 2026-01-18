@@ -47,6 +47,8 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 /* View Toggle */
@@ -485,7 +487,7 @@
 
 .list-text {
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -565,11 +565,14 @@
 }
 
 .media-assets-header {
-  margin-bottom: var(--spacing-lg);
+  display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
 }
 
 .media-assets-header h3 {
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0;
   font-size: var(--font-size-lg);
 }
 

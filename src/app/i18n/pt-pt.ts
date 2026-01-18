@@ -84,6 +84,7 @@ export const ptPT: LocaleStrings = {
     showOnlyThis: 'Mostrar apenas esta fonte',
     editSource2: 'Editar fonte',
     removeSource: 'Remover fonte',
+    duplicateError: 'Uma fonte com este URL já existe.',
   },
 
   // Painel de Feed
@@ -99,7 +100,22 @@ export const ptPT: LocaleStrings = {
     daysAgo: 'd atrás',
     justNow: 'agora',
     alsoIn: 'Também em:',
-    confirmDelete: 'Eliminar {count} itens selecionados da cache?',
+    confirmDelete: 'Eliminar {count} elementos seleccionados?',
+    selectAll: 'Seleccionar todos',
+    clear: 'Limpiar',
+    sort: 'Ordenar:',
+    date: 'Fecha',
+    source: 'Fuente',
+    used: 'Usado',
+    selected: 'seleccionados',
+    list: 'Lista',
+    cards: 'Tarjetas',
+    byDate: 'Por fecha',
+    bySource: 'Por fuente',
+    deleteSelected: 'Eliminar elementos seleccionados',
+    switchToLight: 'Cambiar a Modo Claro',
+    switchToDark: 'Cambiar a Modo Oscuro',
+    feedUpdates: 'Actualizaciones de Feed',
   },
 
   // Painel de Conteúdo (antes Painel de Thread)

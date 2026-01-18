@@ -1,0 +1,48 @@
+# Cloud Build ignore file
+# This file overrides .gitignore for gcloud builds submit
+
+# Include everything from .gitignore EXCEPT environment files
+#!include:.gitignore
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/
+.history/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+/coverage
+
+# Git
+.git/
+.github/
+
+# Documentation (not needed for build)
+*.md
+!README.md
+
+# Local development files
+*.local
+
+# IMPORTANT: Do NOT ignore environment files - they are needed for build
+# (Unlike .gitignore, we need these for Cloud Build)

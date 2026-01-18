@@ -293,6 +293,7 @@ import { I18nService, SupportedLocale } from '../../i18n';
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
       background: var(--color-bg-secondary);
+      color: var(--color-text-primary);
       cursor: pointer;
       transition: all var(--transition-fast);
       font-size: var(--font-size-sm);

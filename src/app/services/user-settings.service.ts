@@ -2,6 +2,7 @@ import { Injectable, inject, signal, effect } from '@angular/core';
 import { Firestore, doc, setDoc, getDocFromServer } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { CryptoService } from './crypto.service';
+import { LoggerService } from './logger.service';
 
 export interface UserSettings {
   twitterBearerToken?: string;
@@ -22,6 +23,7 @@ export class UserSettingsService {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private crypto = inject(CryptoService);
+  private logger = inject(LoggerService);
 
   settings = signal<UserSettings | null>(null);
   isLoading = signal(false);
@@ -53,7 +55,7 @@ export class UserSettingsService {
     // Prevent concurrent loads
     if (this.loadingPromise) return;
 
-    console.log('[UserSettings] Loading encrypted settings for user:', userId);
+    this.logger.debug('UserSettings', 'Loading encrypted settings');
     this.error.set(null);
 
     this.loadingPromise = (async () => {
@@ -63,21 +65,21 @@ export class UserSettingsService {
 
         if (docSnap.exists()) {
           const encrypted = docSnap.data() as EncryptedSettings;
-          console.log('[UserSettings] Encrypted settings loaded, decrypting...');
+          this.logger.debug('UserSettings', 'Encrypted settings loaded, decrypting...');
 
           const decrypted = await this.decryptSettings(encrypted);
           this.settings.set(decrypted);
-          console.log('[UserSettings] Settings decrypted successfully');
+          this.logger.debug('UserSettings', 'Settings decrypted successfully');
         } else {
-          console.log('[UserSettings] No settings found, using empty');
+          this.logger.debug('UserSettings', 'No settings found, using empty');
           this.settings.set({});
         }
       } catch (err: any) {
-        console.error('[UserSettings] Error loading/decrypting settings:', err);
+        this.logger.error('UserSettings', 'Error loading/decrypting settings:', err);
         // Don't block - just use empty settings so user can save
         this.settings.set({});
       } finally {
-        console.log('[UserSettings] Load complete');
+        this.logger.debug('UserSettings', 'Load complete');
         this.loadingPromise = null;
       }
     })();
@@ -103,9 +105,9 @@ export class UserSettingsService {
 
       // Update local state with decrypted values
       this.settings.set({ ...this.settings(), ...settings });
-      console.log('[UserSettings] Encrypted settings saved successfully');
+      this.logger.info('UserSettings', 'Encrypted settings saved successfully');
     } catch (err: any) {
-      console.error('Error saving encrypted settings:', err);
+      this.logger.error('UserSettings', 'Error saving encrypted settings:', err);
       this.error.set(err.message || 'Error saving settings');
       throw err;
     } finally {
@@ -136,7 +138,7 @@ export class UserSettingsService {
       try {
         settings.geminiApiKey = await this.crypto.decrypt(encrypted.encryptedGeminiApiKey);
       } catch (err) {
-        console.error('[UserSettings] Failed to decrypt Gemini API key:', err);
+        this.logger.warn('UserSettings', 'Failed to decrypt Gemini API key');
       }
     }
 
@@ -144,7 +146,7 @@ export class UserSettingsService {
       try {
         settings.twitterBearerToken = await this.crypto.decrypt(encrypted.encryptedTwitterToken);
       } catch (err) {
-        console.error('[UserSettings] Failed to decrypt Twitter token:', err);
+        this.logger.warn('UserSettings', 'Failed to decrypt Twitter token');
       }
     }
 
