@@ -37,6 +37,8 @@ DevPulse es una aplicación web moderna que agrega contenido de múltiples fuent
 | 🔐 **Cifrado Extremo a Extremo** | API keys cifradas en reposo con AES-256-GCM |
 | 🌍 **8 Idiomas** | i18n completo: PT-BR, PT-PT, ES, FR, ZH, JA, DE, EN |
 | 🔑 **Modelo BYOK** | Bring Your Own Key - usuarios proporcionan sus propias API keys |
+| 📊 **Contador Global** | Muestra total de contenidos generados por todos los usuarios en tiempo real |
+| ☁️ **Sync Cross-Device** | Feeds y configuraciones sincronizados vía Cloud Firestore |
 
 ---
 
