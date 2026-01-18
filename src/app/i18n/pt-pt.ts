@@ -26,6 +26,9 @@ export const ptPT: LocaleStrings = {
     originalMedia: 'Mídia Original',
     aiGenerated: 'Gerado por IA',
     confirm: 'Confirmar',
+    sources: 'Fontes',
+    feed: 'Feed',
+    content: 'Conteúdo',
   },
 
   // Autenticação

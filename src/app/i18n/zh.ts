@@ -26,6 +26,9 @@ export const zh: LocaleStrings = {
     originalMedia: '原始媒体',
     aiGenerated: 'AI生成',
     confirm: '确认',
+    sources: '来源',
+    feed: '动态',
+    content: '内容',
   },
 
   // 认证

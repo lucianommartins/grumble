@@ -24,6 +24,9 @@ export const en = {
     originalMedia: 'Original Media',
     aiGenerated: 'AI Generated',
     confirm: 'Confirm',
+    sources: 'Sources',
+    feed: 'Feed',
+    content: 'Content',
   },
 
   // Auth

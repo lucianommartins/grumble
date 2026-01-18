@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { FeedDashboardComponent } from './components/feed-dashboard/feed-dashboard.component';
 import { ThreadPanelComponent } from './components/thread-panel/thread-panel.component';
@@ -6,9 +6,12 @@ import { LoginComponent } from './components/login/login.component';
 import { SettingsComponent } from './components/settings/settings.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
 import { AuthService } from './services/auth.service';
+import { SyncService } from './services/sync.service';
 import { I18nService } from './i18n';
+import { CommonModule } from '@angular/common';
 
 const LAYOUT_STORAGE_KEY = 'devpulse_layout';
+const MOBILE_BREAKPOINT = 768;
 
 interface LayoutSettings {
   sidebarWidth: number;
@@ -18,15 +21,23 @@ interface LayoutSettings {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [SidebarComponent, FeedDashboardComponent, ThreadPanelComponent, LoginComponent, SettingsComponent, ConfirmDialogComponent],
+  imports: [CommonModule, SidebarComponent, FeedDashboardComponent, ThreadPanelComponent, LoginComponent, SettingsComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
+export class App implements OnInit, OnDestroy {
   title = 'DevPulse';
   authService = inject(AuthService);
+  syncService = inject(SyncService);
   i18n = inject(I18nService);
   showSettings = signal(false);
+
+  // Mobile tab navigation
+  isMobile = signal(typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false);
+  activeTab = signal<'sources' | 'feed' | 'content'>('feed');
+
+  // Show content tab when there's generated content
+  hasGeneratedContent = computed(() => this.syncService.selectedCount() > 0);
 
   sidebarWidth = signal(this.loadLayout().sidebarWidth);
   threadPanelWidth = signal(this.loadLayout().threadPanelWidth);
@@ -34,6 +45,7 @@ export class App {
   private resizing: 'left' | 'right' | null = null;
   private startX = 0;
   private startWidth = 0;
+  private resizeHandler = () => this.checkMobile();
 
   private loadLayout(): LayoutSettings {
     try {
@@ -97,6 +109,22 @@ export class App {
       // Persist layout changes
       this.saveLayout();
     }
+  }
+
+  ngOnInit(): void {
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', this.resizeHandler);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
+  }
+
+  private checkMobile(): void {
+    this.isMobile.set(window.innerWidth <= MOBILE_BREAKPOINT);
   }
 }
 

@@ -29,20 +29,51 @@
         <div class="user-avatar-placeholder">{{ user.displayName?.charAt(0) || 'U' }}</div>
         }
         <button class="btn btn-ghost btn-sm logout-btn" (click)="authService.signOut()">
-          {{ i18n.t.auth.signOut }}
+          <span>{{ i18n.t.auth.signOut }}</span>
         </button>
       </div>
       }
     </div>
   </header>
 
+  <!-- Mobile Tab Bar -->
+  @if (isMobile()) {
+  <nav class="mobile-tabs">
+    <button class="mobile-tab" [class.active]="activeTab() === 'sources'" (click)="activeTab.set('sources')">
+      <span class="tab-icon">📡</span>
+      <span class="tab-label">{{ i18n.t.common.sources || 'Sources' }}</span>
+    </button>
+    <button class="mobile-tab" [class.active]="activeTab() === 'feed'" (click)="activeTab.set('feed')">
+      <span class="tab-icon">📰</span>
+      <span class="tab-label">{{ i18n.t.common.feed || 'Feed' }}</span>
+    </button>
+    @if (hasGeneratedContent()) {
+    <button class="mobile-tab" [class.active]="activeTab() === 'content'" (click)="activeTab.set('content')">
+      <span class="tab-icon">✨</span>
+      <span class="tab-label">{{ i18n.t.common.content || 'Content' }}</span>
+    </button>
+    }
+  </nav>
+  }
+
   <!-- Main Content -->
   <main class="app-main">
-    <app-sidebar [style.width.px]="sidebarWidth()" (openSettings)="showSettings.set(true)"></app-sidebar>
+    @if (!isMobile() || activeTab() === 'sources') {
+    <app-sidebar [style.width.px]="isMobile() ? null : sidebarWidth()"
+      (openSettings)="showSettings.set(true)"></app-sidebar>
+    }
+    @if (!isMobile()) {
     <div class="resize-handle" (mousedown)="startResize($event, 'left')"></div>
+    }
+    @if (!isMobile() || activeTab() === 'feed') {
     <app-feed-dashboard></app-feed-dashboard>
+    }
+    @if (!isMobile()) {
     <div class="resize-handle" (mousedown)="startResize($event, 'right')"></div>
-    <app-thread-panel [style.width.px]="threadPanelWidth()"></app-thread-panel>
+    }
+    @if (!isMobile() || activeTab() === 'content') {
+    <app-thread-panel [style.width.px]="isMobile() ? null : threadPanelWidth()"></app-thread-panel>
+    }
   </main>
 </div>
 

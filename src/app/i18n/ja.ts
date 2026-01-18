@@ -26,6 +26,9 @@ export const ja: LocaleStrings = {
     originalMedia: '元のメディア',
     aiGenerated: 'AI生成',
     confirm: '確認',
+    sources: 'ソース',
+    feed: 'フィード',
+    content: 'コンテンツ',
   },
 
   // 認証

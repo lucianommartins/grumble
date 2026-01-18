@@ -26,6 +26,9 @@ export const de: LocaleStrings = {
     originalMedia: 'Originalmedien',
     aiGenerated: 'KI-Generiert',
     confirm: 'Bestätigen',
+    sources: 'Quellen',
+    feed: 'Feed',
+    content: 'Inhalt',
   },
 
   // Authentifizierung
