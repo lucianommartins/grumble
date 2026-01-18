@@ -198,4 +198,18 @@ export const zh: LocaleStrings = {
     feature3Title: '视觉媒体',
     feature3Desc: '用 AI 创建图片和视频',
   },
+
+  // 临时内容
+  adhoc: {
+    button: '临时内容',
+    title: '从 URL 或图片生成',
+    urlPlaceholder: '粘贴 URL（博客、文档、GitHub、YouTube...）',
+    uploadImage: '上传图片',
+    dropImage: '将图片拖放到此处或点击上传',
+    generate: '生成',
+    processing: '正在处理内容...',
+    errorUrlNotAccessible: 'URL 无法访问。请尝试其他链接。',
+    errorNoInput: '请提供 URL 或图片。',
+    errorGeneration: '生成失败。请重试。',
+  },
 };

@@ -2,6 +2,10 @@
   <div class="panel-header">
     <h2 class="panel-title">{{ i18n.t.content.title }}</h2>
     
+    <!-- Adhoc Content Button -->
+    <button class="btn btn-ghost btn-sm adhoc-btn" (click)="showAdhocModal.set(true)" title="{{ i18n.t.adhoc.button }}">
+      📎 {{ i18n.t.adhoc.button }}
+    </button>
     <!-- Platform tabs when content is generated -->
     @if (hasAnyContent()) {
     <div class="platform-tabs">
@@ -319,4 +323,60 @@
     }
   </div>
   }
+<!-- Adhoc Content Modal -->
+@if (showAdhocModal()) {
+<div class="adhoc-modal-overlay" (click)="closeAdhocModal()">
+  <div class="adhoc-modal" (click)="$event.stopPropagation()">
+    <div class="adhoc-modal-header">
+      <h3>📎 {{ i18n.t.adhoc.title }}</h3>
+      <button class="btn btn-ghost btn-sm" (click)="closeAdhocModal()">✕</button>
+    </div>
+
+    <div class="adhoc-modal-content">
+      <!-- URL Input -->
+      <div class="adhoc-field">
+        <label>🔗 URL</label>
+        <input type="text" class="adhoc-input" [value]="adhocUrl()" (input)="adhocUrl.set($any($event.target).value)"
+          [placeholder]="i18n.t.adhoc.urlPlaceholder" />
+      </div>
+
+      <!-- Image Upload -->
+      <div class="adhoc-field">
+        <label>🖼️ {{ i18n.t.adhoc.uploadImage }}</label>
+        <div class="adhoc-dropzone" (click)="adhocFileInput.click()" (dragover)="$event.preventDefault()"
+          (drop)="onAdhocImageDrop($event)">
+          @if (adhocImagePreview()) {
+          <img [src]="adhocImagePreview()" alt="Preview" class="adhoc-image-preview" />
+          <button class="btn btn-ghost btn-sm remove-image"
+            (click)="clearAdhocImage(); $event.stopPropagation()">✕</button>
+          } @else {
+          <span class="dropzone-text">{{ i18n.t.adhoc.dropImage }}</span>
+          }
+        </div>
+        <input type="file" #adhocFileInput accept="image/*" (change)="onAdhocImageSelect($event)"
+          style="display: none" />
+      </div>
+
+      <!-- Error Message -->
+      @if (adhocError()) {
+      <div class="adhoc-error">
+        ⚠️ {{ adhocError() }}
+      </div>
+      }
+    </div>
+
+    <div class="adhoc-modal-footer">
+      <button class="btn btn-secondary" (click)="closeAdhocModal()">{{ i18n.t.common.cancel }}</button>
+      <button class="btn btn-primary" (click)="generateAdhocContent()" [disabled]="adhocLoading()">
+        @if (adhocLoading()) {
+        <span class="spinner-small"></span>
+        {{ i18n.t.adhoc.processing }}
+        } @else {
+        ✨ {{ i18n.t.adhoc.generate }}
+        }
+      </button>
+    </div>
+  </div>
+</div>
+}
 </div>

@@ -198,4 +198,18 @@ export const ja: LocaleStrings = {
     feature3Title: 'ビジュアルメディア',
     feature3Desc: 'AI で画像と動画を作成',
   },
+
+  // アドホックコンテンツ
+  adhoc: {
+    button: 'アドホックコンテンツ',
+    title: 'URL または画像から生成',
+    urlPlaceholder: 'URL を貼り付け（ブログ、ドキュメント、GitHub、YouTube...）',
+    uploadImage: '画像をアップロード',
+    dropImage: 'ここに画像をドロップまたはクリックしてアップロード',
+    generate: '生成',
+    processing: 'コンテンツを処理中...',
+    errorUrlNotAccessible: 'URL にアクセスできません。別のリンクを試してください。',
+    errorNoInput: 'URL または画像を入力してください。',
+    errorGeneration: '生成に失敗しました。もう一度お試しください。',
+  },
 };

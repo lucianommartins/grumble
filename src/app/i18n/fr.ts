@@ -198,4 +198,18 @@ export const fr: LocaleStrings = {
     feature3Title: 'Médias Visuels',
     feature3Desc: 'Créez images et vidéos avec l\'IA',
   },
+
+  // Contenu Adhoc
+  adhoc: {
+    button: 'Contenu Adhoc',
+    title: 'Générer depuis URL ou Image',
+    urlPlaceholder: 'Collez une URL (blog, docs, GitHub, YouTube...)',
+    uploadImage: 'Télécharger image',
+    dropImage: 'Déposez l\'image ici ou cliquez pour télécharger',
+    generate: 'Générer',
+    processing: 'Traitement du contenu...',
+    errorUrlNotAccessible: 'URL non accessible. Essayez un autre lien.',
+    errorNoInput: 'Veuillez fournir une URL ou une image.',
+    errorGeneration: 'Échec de la génération. Veuillez réessayer.',
+  },
 };

@@ -196,6 +196,20 @@ export const en = {
     feature3Title: 'Visual Media',
     feature3Desc: 'Create images and videos with AI',
   },
+
+  // Adhoc Content
+  adhoc: {
+    button: 'Adhoc Content',
+    title: 'Generate from URL or Image',
+    urlPlaceholder: 'Paste a URL (blog, docs, GitHub, YouTube...)',
+    uploadImage: 'Upload image',
+    dropImage: 'Drop image here or click to upload',
+    generate: 'Generate',
+    processing: 'Processing content...',
+    errorUrlNotAccessible: 'URL not accessible. Try a different link.',
+    errorNoInput: 'Please provide a URL or image.',
+    errorGeneration: 'Failed to generate content. Please try again.',
+  },
 };
 
 export type LocaleStrings = typeof en;

@@ -44,6 +44,7 @@ export class AuthService {
   }
 
   private readonly ALLOWED_DOMAIN = 'google.com';
+  private readonly ALLOWED_EMAILS = ['tabatha.sk@gmail.com'];
 
   async signInWithGoogle(): Promise<AppUser | null> {
     this.authError.set(null);
@@ -51,8 +52,11 @@ export class AuthService {
       const result = await signInWithPopup(this.auth, this.googleProvider);
       const user = result.user;
 
-      // Validate email domain
-      if (!user.email?.endsWith(`@${this.ALLOWED_DOMAIN}`)) {
+      // Validate email domain OR specific allowed emails
+      const isAllowedDomain = user.email?.endsWith(`@${this.ALLOWED_DOMAIN}`);
+      const isAllowedEmail = this.ALLOWED_EMAILS.includes(user.email || '');
+
+      if (!isAllowedDomain && !isAllowedEmail) {
         const errorMsg = `Acesso restrito a emails @${this.ALLOWED_DOMAIN}`;
         this.authError.set(errorMsg);
         await signOut(this.auth);

@@ -162,3 +162,64 @@
 .settings-btn:hover {
   opacity: 1;
 }
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .app-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .header-brand {
+    gap: var(--spacing-xs);
+  }
+
+  .logo-img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .app-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .header-badge {
+    display: none;
+  }
+
+  .header-right {
+    gap: var(--spacing-sm);
+  }
+
+  .user-avatar,
+  .user-avatar-placeholder {
+    width: 28px;
+    height: 28px;
+  }
+
+  .logout-btn {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .app-main {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  /* Hide resize handles on mobile */
+  .resize-handle {
+    display: none;
+  }
+}
+
+/* Small mobile - single panel view */
+@media (max-width: 480px) {
+  .app-header {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .app-title {
+    font-size: var(--font-size-md);
+  }
+}

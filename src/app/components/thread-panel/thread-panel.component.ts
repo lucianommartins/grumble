@@ -68,6 +68,14 @@ export class ThreadPanelComponent {
   generatedAssets = signal<Map<string, GeneratedMedia>>(new Map());
   usedItemsForMedia = signal<FeedItem[]>([]);  // Store items used in last generation
 
+  // Adhoc content state
+  showAdhocModal = signal(false);
+  adhocUrl = signal('');
+  adhocImageBase64 = signal<string | null>(null);
+  adhocImagePreview = signal<string | null>(null);
+  adhocError = signal<string | null>(null);
+  adhocLoading = signal(false);
+
   get selectedItems() {
     return this.syncService.selectedItems;
   }
@@ -675,5 +683,81 @@ export class ThreadPanelComponent {
 
   downloadOriginalMedia(media: { type: string; url: string; source: string }): void {
     window.open(media.url, '_blank');
+  }
+
+  // Adhoc content methods
+  closeAdhocModal(): void {
+    this.showAdhocModal.set(false);
+    this.adhocUrl.set('');
+    this.adhocImageBase64.set(null);
+    this.adhocImagePreview.set(null);
+    this.adhocError.set(null);
+    this.adhocLoading.set(false);
+  }
+
+  clearAdhocImage(): void {
+    this.adhocImageBase64.set(null);
+    this.adhocImagePreview.set(null);
+  }
+
+  onAdhocImageSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.processAdhocImage(input.files[0]);
+    }
+  }
+
+  onAdhocImageDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
+      this.processAdhocImage(event.dataTransfer.files[0]);
+    }
+  }
+
+  private processAdhocImage(file: File): void {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      this.adhocImagePreview.set(result);
+      // Extract base64 data without the data URL prefix
+      this.adhocImageBase64.set(result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async generateAdhocContent(): Promise<void> {
+    const url = this.adhocUrl().trim();
+    const imageBase64 = this.adhocImageBase64();
+
+    if (!url && !imageBase64) {
+      this.adhocError.set(this.i18n.t.adhoc.errorNoInput);
+      return;
+    }
+
+    this.adhocLoading.set(true);
+    this.adhocError.set(null);
+
+    try {
+      const result = await this.geminiService.generateFromAdhoc(
+        url || undefined,
+        imageBase64 || undefined
+      );
+
+      // Set the thread and close modal
+      this.thread.set(result);
+      this.activePlatformTab.set('twitter');
+      this.closeAdhocModal();
+
+    } catch (error: any) {
+      if (error.message === 'URL_NOT_ACCESSIBLE') {
+        this.adhocError.set(this.i18n.t.adhoc.errorUrlNotAccessible);
+      } else if (error.message === 'NO_INPUT') {
+        this.adhocError.set(this.i18n.t.adhoc.errorNoInput);
+      } else {
+        this.adhocError.set(this.i18n.t.adhoc.errorGeneration);
+      }
+    } finally {
+      this.adhocLoading.set(false);
+    }
   }
 }

@@ -198,4 +198,18 @@ export const ptBR: LocaleStrings = {
     feature3Title: 'Mídia Visual',
     feature3Desc: 'Crie imagens e vídeos com IA',
   },
+
+  // Conteúdo Adhoc
+  adhoc: {
+    button: 'Conteúdo Adhoc',
+    title: 'Gerar a partir de URL ou Imagem',
+    urlPlaceholder: 'Cole uma URL (blog, docs, GitHub, YouTube...)',
+    uploadImage: 'Enviar imagem',
+    dropImage: 'Arraste a imagem aqui ou clique para enviar',
+    generate: 'Gerar',
+    processing: 'Processando conteúdo...',
+    errorUrlNotAccessible: 'URL não acessível. Tente outro link.',
+    errorNoInput: 'Forneça uma URL ou imagem.',
+    errorGeneration: 'Falha ao gerar conteúdo. Tente novamente.',
+  },
 };

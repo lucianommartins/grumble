@@ -198,4 +198,18 @@ export const es: LocaleStrings = {
     feature3Title: 'Multimedia',
     feature3Desc: 'Crea imágenes y videos con IA',
   },
+
+  // Contenido Adhoc
+  adhoc: {
+    button: 'Contenido Adhoc',
+    title: 'Generar desde URL o Imagen',
+    urlPlaceholder: 'Pega una URL (blog, docs, GitHub, YouTube...)',
+    uploadImage: 'Subir imagen',
+    dropImage: 'Arrastra la imagen aquí o haz clic para subir',
+    generate: 'Generar',
+    processing: 'Procesando contenido...',
+    errorUrlNotAccessible: 'URL no accesible. Intenta con otro enlace.',
+    errorNoInput: 'Proporciona una URL o imagen.',
+    errorGeneration: 'Error al generar contenido. Intenta de nuevo.',
+  },
 };

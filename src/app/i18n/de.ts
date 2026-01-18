@@ -198,4 +198,18 @@ export const de: LocaleStrings = {
     feature3Title: 'Visuelle Medien',
     feature3Desc: 'Erstellen Sie Bilder und Videos mit KI',
   },
+
+  // Adhoc-Inhalte
+  adhoc: {
+    button: 'Adhoc-Inhalt',
+    title: 'Aus URL oder Bild generieren',
+    urlPlaceholder: 'URL einfügen (Blog, Docs, GitHub, YouTube...)',
+    uploadImage: 'Bild hochladen',
+    dropImage: 'Bild hier ablegen oder klicken zum Hochladen',
+    generate: 'Generieren',
+    processing: 'Inhalt wird verarbeitet...',
+    errorUrlNotAccessible: 'URL nicht erreichbar. Versuchen Sie einen anderen Link.',
+    errorNoInput: 'Bitte geben Sie eine URL oder ein Bild an.',
+    errorGeneration: 'Generierung fehlgeschlagen. Bitte erneut versuchen.',
+  },
 };

@@ -27,10 +27,12 @@ DevPulse es una aplicación web moderna que agrega contenido de múltiples fuent
 |----------------|-------------|
 | 🌐 **Agregación Multi-fuente** | Combina Twitter/X, YouTube, RSS y blogs en un único feed |
 | 🔍 **Detección Automática de Tipo** | Identifica automáticamente Twitter, YouTube, RSS o Blog por URL |
+| 📎 **Contenido Adhoc** | Genera hilos de cualquier URL o imagen con Gemini Vision |
 | 📺 **Soporte YouTube** | Busca videos vía RSS de canales usando Channel ID |
 | 🖼️ **Pestaña Media Assets** | Visualiza y descarga medios originales extraídos de los feeds |
 | 🤖 **Generación de Hilos con IA** | Gemini 3.0 Flash crea hilos optimizados por plataforma |
 | 🎨 **Generación de Medios con IA** | Genera imágenes (Nano Banana) y videos (Veo 3.1) |
+| 📱 **Responsive Móvil** | Interfaz adaptativa para uso en smartphones |
 | 🐦 **Extracción de Video de Twitter** | Extrae MP4 de alta calidad vía host-swap (pbs.twimg) |
 | 🔐 **Cifrado Extremo a Extremo** | API keys cifradas en reposo con AES-256-GCM |
 | 🌍 **8 Idiomas** | i18n completo: PT-BR, PT-PT, ES, FR, ZH, JA, DE, EN |

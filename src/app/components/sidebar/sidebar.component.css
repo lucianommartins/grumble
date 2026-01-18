@@ -427,3 +427,52 @@
 .icon-youtube {
   color: #FF0000;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .sidebar {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    overflow: visible;
+  }
+
+  .feeds-list {
+    max-height: 120px;
+    overflow-y: auto;
+  }
+
+  .how-it-works {
+    display: none;
+  }
+
+  .sync-button {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+
+  .add-form {
+    padding: var(--spacing-sm);
+  }
+
+  .section-title {
+    font-size: 10px;
+  }
+
+  .time-slider-container {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .type-filters {
+    gap: 2px;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .type-filter-btn {
+    padding: var(--spacing-xs);
+    font-size: 14px;
+  }
+}
