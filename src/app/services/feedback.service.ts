@@ -318,10 +318,8 @@ export class FeedbackService {
 
       this.logger.info('Feedback', `Analysis complete. ${processedCount} items processed.`);
 
-      // Translate items to ALL 8 languages at sync time
-      const itemsNeedingTranslation = this.items().filter(i =>
-        i.language && !i.translations
-      );
+      // Translate items to ALL 8 languages at sync time (including items without detected language)
+      const itemsNeedingTranslation = this.items().filter(i => !i.translations);
 
       if (itemsNeedingTranslation.length > 0) {
         this.syncStatus.set({ step: 'translating', message: `Traduzindo 0 de ${itemsNeedingTranslation.length}...` });

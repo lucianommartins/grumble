@@ -228,7 +228,7 @@ export class SentimentService {
 
     const itemsText = items.map(item => `
 [ITEM] ID: ${item.id}
-SOURCE_LANG: ${item.language}
+SOURCE_LANG: ${item.language || 'UNKNOWN'}
 ${item.title ? `TITLE: ${item.title}` : ''}
 CONTENT: ${item.content.substring(0, 400)}
 ---`).join('\n');
@@ -236,7 +236,11 @@ CONTENT: ${item.content.substring(0, 400)}
     const targetsList = targetLangs.map(l => `${l} (${langNames[l]})`).join(', ');
 
     return `Translate these feedback items to ALL of these languages: ${targetsList}.
-Skip translating to the same language as SOURCE_LANG.
+
+IMPORTANT RULES:
+1. If SOURCE_LANG is UNKNOWN, auto-detect it from the content.
+2. For the detected source language, return the original text unchanged.
+3. Translate to all OTHER languages.
 
 ${itemsText}
 
@@ -246,20 +250,20 @@ Respond in JSON:
     {
       "itemId": "the item ID",
       "translations": {
-        "en": "English translation",
-        "pt": "Portuguese translation",
-        "es": "Spanish translation",
-        "fr": "French translation",
-        "de": "German translation",
-        "ja": "Japanese translation",
-        "zh": "Chinese translation"
+        "en": "English translation (or original if source is English)",
+        "pt": "Portuguese translation (or original if source is Portuguese)",
+        "es": "Spanish translation (or original if source is Spanish)",
+        "fr": "French translation (or original if source is French)",
+        "de": "German translation (or original if source is German)",
+        "ja": "Japanese translation (or original if source is Japanese)",
+        "zh": "Chinese translation (or original if source is Chinese)"
       },
       "titles": { ... same structure if title exists ... }
     }
   ]
 }
 
-Keep translations natural. Preserve technical terms. Skip the source language.`;
+Keep translations natural. Preserve technical terms.`;
   }
 
   /**
