@@ -173,8 +173,9 @@ export class SentimentService {
 
     const targetLanguages = ['en', 'pt', 'es', 'fr', 'de', 'ja', 'zh'];
 
-    // Process in parallel batches (10 concurrent batches of 100 items = 1000 items at a time)
-    const batchSize = 100;
+    // Process in parallel batches (10 concurrent batches of 15 items = 150 items at a time)
+    // Smaller batches reduce JSON parsing errors from oversized responses
+    const batchSize = 15;
     const parallelBatches = 10;
     let processedCount = 0;
     const batchGroups: FeedbackItem[][] = [];
@@ -184,6 +185,8 @@ export class SentimentService {
       batchGroups.push(needsTranslation.slice(i, i + batchSize));
     }
 
+    this.logger.info('Sentiment', `Starting translation: ${batchGroups.length} batches of ${batchSize} items, ${parallelBatches} in parallel`);
+
     // Process batches in groups of 10 in parallel
     for (let g = 0; g < batchGroups.length; g += parallelBatches) {
       const parallelGroup = batchGroups.slice(g, g + parallelBatches);
@@ -192,13 +195,14 @@ export class SentimentService {
         parallelGroup.map(async batch => {
           const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
           const response = await this.callGemini(apiKey, prompt);
-          return { batch, data: JSON.parse(response) };
+          const parsed = this.tryParseJSON(response);
+          return { batch, data: parsed };
         })
       );
 
       // Process results from all parallel batches
       for (const result of parallelResults) {
-        if (result.status === 'fulfilled') {
+        if (result.status === 'fulfilled' && result.value.data) {
           for (const itemTranslation of result.value.data.items || []) {
             results.set(itemTranslation.itemId, {
               translations: itemTranslation.translations || {},
@@ -207,8 +211,9 @@ export class SentimentService {
           }
           processedCount += result.value.batch.length;
         } else {
-          this.logger.error('Sentiment', 'Multi-language translation batch failed:', result.reason);
-          processedCount += batchSize; // Estimate
+          const reason = result.status === 'rejected' ? result.reason : 'JSON parse failed';
+          this.logger.error('Sentiment', 'Multi-language translation batch failed:', reason);
+          processedCount += batchSize;
         }
       }
 
@@ -280,6 +285,50 @@ Keep translations natural. Preserve technical terms.`;
     if (code.startsWith('de')) return 'de';
     if (code.startsWith('ja')) return 'ja';
     return code;
+  }
+
+  /**
+   * Try to parse JSON with repair logic for common Gemini response issues
+   */
+  private tryParseJSON(text: string): any {
+    // First, try direct parse
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      // Continue to repair attempts
+    }
+
+    // Try to extract JSON from markdown code blocks
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[1].trim());
+      } catch (e) {
+        // Continue
+      }
+    }
+
+    // Try to find and parse JSON object
+    const objectMatch = text.match(/\{[\s\S]*\}/);
+    if (objectMatch) {
+      try {
+        return JSON.parse(objectMatch[0]);
+      } catch (e) {
+        // Try repair: fix unterminated strings by closing them
+        let repaired = objectMatch[0];
+        // Close any unclosed strings before closing braces/brackets
+        repaired = repaired.replace(/,\s*([}\]])/g, '$1');
+        // Remove trailing commas
+        repaired = repaired.replace(/,\s*$/gm, '');
+        try {
+          return JSON.parse(repaired);
+        } catch (e2) {
+          this.logger.warn('Sentiment', 'JSON repair failed, could not parse response');
+        }
+      }
+    }
+
+    return null;
   }
 
   private buildTranslationPrompt(items: FeedbackItem[], targetLang: string): string {
