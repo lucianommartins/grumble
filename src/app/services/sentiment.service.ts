@@ -311,20 +311,49 @@ Keep translations natural. Preserve technical terms.`;
     // Try to find and parse JSON object
     const objectMatch = text.match(/\{[\s\S]*\}/);
     if (objectMatch) {
+      let repaired = objectMatch[0];
+
+      // First attempt: direct parse
       try {
-        return JSON.parse(objectMatch[0]);
+        return JSON.parse(repaired);
       } catch (e) {
-        // Try repair: fix unterminated strings by closing them
-        let repaired = objectMatch[0];
-        // Close any unclosed strings before closing braces/brackets
-        repaired = repaired.replace(/,\s*([}\]])/g, '$1');
-        // Remove trailing commas
-        repaired = repaired.replace(/,\s*$/gm, '');
-        try {
-          return JSON.parse(repaired);
-        } catch (e2) {
-          this.logger.warn('Sentiment', 'JSON repair failed, could not parse response');
+        // Continue with repairs
+      }
+
+      // Repair 1: Fix unescaped control characters in strings
+      repaired = repaired.replace(/[\x00-\x1f]/g, (char) => {
+        if (char === '\n') return '\\n';
+        if (char === '\r') return '\\r';
+        if (char === '\t') return '\\t';
+        return '';
+      });
+
+      // Repair 2: Remove trailing commas before } or ]
+      repaired = repaired.replace(/,\s*([}\]])/g, '$1');
+
+      // Repair 3: Try to fix unescaped quotes inside strings
+      // This is tricky - only do simple cases
+      repaired = repaired.replace(/"([^"]*?)(?<!\\)"([^"]*?)"/g, (match, p1, p2) => {
+        // If there's content after the quote that looks like it should be part of the string
+        if (p2 && !p2.match(/^\s*[,:\]}]/)) {
+          return `"${p1}\\"${p2}"`;
         }
+        return match;
+      });
+
+      try {
+        return JSON.parse(repaired);
+      } catch (e2) {
+        // Last attempt: try to extract just the items array if present
+        const itemsMatch = repaired.match(/"items"\s*:\s*\[([\s\S]*?)\]/);
+        if (itemsMatch) {
+          try {
+            return { items: JSON.parse(`[${itemsMatch[1]}]`) };
+          } catch (e3) {
+            // Give up
+          }
+        }
+        this.logger.warn('Sentiment', 'JSON repair failed, could not parse response');
       }
     }
 
