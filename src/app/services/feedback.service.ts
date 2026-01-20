@@ -107,6 +107,38 @@ export class FeedbackService {
   });
 
   /**
+   * Load cached feedback from Firestore (shared collection)
+   * This is called on app startup to show existing data without fetching new
+   */
+  async loadCachedFeedback(): Promise<void> {
+    if (this.isLoading()) return;
+
+    this.isLoading.set(true);
+    this.logger.info('Feedback', 'Loading cached feedback from Firestore...');
+
+    try {
+      // Load all cached items and groups from shared Firestore
+      const [items, groups] = await Promise.all([
+        this.sharedFeedback.loadItems(),
+        this.sharedFeedback.loadGroups()
+      ]);
+
+      if (items.length > 0) {
+        this.items.set(items);
+        this.groups.set(groups);
+        this.lastSyncAt.set(new Date());
+        this.logger.info('Feedback', `Loaded ${items.length} items and ${groups.length} groups from cache`);
+      } else {
+        this.logger.info('Feedback', 'No cached feedback found');
+      }
+    } catch (error) {
+      this.logger.error('Feedback', 'Failed to load cached feedback:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  /**
    * Sync all enabled sources
    */
   async syncAll(): Promise<void> {
@@ -251,10 +283,21 @@ export class FeedbackService {
       // Create groups from analyzed items (after all batches)
       const analyzedItems = this.items().filter(i => i.analyzed);
       if (analyzedItems.length >= 10) {
-        this.logger.info('Feedback', 'Generating feedback groups...');
-        const groups = await this.sentiment.groupSimilarItems(analyzedItems.slice(0, 100));
+        this.logger.info('Feedback', `Generating feedback groups for ${analyzedItems.length} items...`);
 
-        for (const group of groups) {
+        // Process in batches of 200 to avoid prompt size limits
+        const groupBatchSize = 200;
+        const allGroups: FeedbackGroup[] = [];
+
+        for (let i = 0; i < analyzedItems.length; i += groupBatchSize) {
+          const batch = analyzedItems.slice(i, i + groupBatchSize);
+          this.logger.debug('Feedback', `Grouping batch ${i / groupBatchSize + 1}: ${batch.length} items`);
+
+          const batchGroups = await this.sentiment.groupSimilarItems(batch);
+          allGroups.push(...batchGroups);
+        }
+
+        for (const group of allGroups) {
           const groupIdSet = new Set(group.itemIds);
           this.items.update(allItems =>
             allItems.map(item =>
@@ -265,14 +308,14 @@ export class FeedbackService {
         }
 
         // Save groups to Firebase
-        if (groups.length > 0) {
-          await this.sharedFeedback.saveGroups(groups);
+        if (allGroups.length > 0) {
+          await this.sharedFeedback.saveGroups(allGroups);
           // Also update items with groupId in Firebase
           const itemsWithGroups = this.items().filter(i => i.groupId);
           await this.sharedFeedback.saveItems(itemsWithGroups);
         }
 
-        this.logger.info('Feedback', `Created ${groups.length} feedback groups.`);
+        this.logger.info('Feedback', `Created ${allGroups.length} feedback groups.`);
       }
     } catch (error) {
       this.logger.error('Feedback', 'Analysis failed:', error);

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { FeedbackDashboardComponent } from './components/feedback-dashboard/feedback-dashboard.component';
@@ -31,6 +31,22 @@ export class App {
   private readonly minWidth = 200;
   private readonly maxWidth = 450;
   private readonly defaultWidth = 280;
+  private hasLoadedCache = false;
+
+  constructor() {
+    // Auto-load cached feedback when user authenticates
+    effect(() => {
+      const isAuth = this.authService.isAuthenticated();
+      const isLoading = this.authService.isLoading();
+      console.log('[App] Effect triggered:', { isAuth, isLoading, hasLoadedCache: this.hasLoadedCache });
+
+      if (isAuth && !isLoading && !this.hasLoadedCache) {
+        this.hasLoadedCache = true;
+        console.log('[App] Loading cached feedback...');
+        this.feedbackService.loadCachedFeedback();
+      }
+    });
+  }
 
   startResize(event: MouseEvent): void {
     this.isResizing = true;

@@ -78,16 +78,25 @@ export class AuthService {
 
   private determineRole(email: string | null): UserRole {
     if (!email) return 'reporter';
-    return this.adminEmails().includes(email.toLowerCase()) ? 'admin' : 'reporter';
+    const emailLower = email.toLowerCase();
+    const isAdmin = this.adminEmails().includes(emailLower);
+    console.log('[AuthService] Determining role:', {
+      email: emailLower,
+      adminEmails: this.adminEmails(),
+      isAdmin
+    });
+    return isAdmin ? 'admin' : 'reporter';
   }
 
   private mapUser(user: User): AppUser {
+    const role = this.determineRole(user.email);
+    console.log('[AuthService] Mapped user:', user.email, '→', role);
     return {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      role: this.determineRole(user.email)
+      role
     };
   }
 
