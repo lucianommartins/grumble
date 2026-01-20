@@ -173,33 +173,47 @@ export class SentimentService {
 
     const targetLanguages = ['en', 'pt', 'es', 'fr', 'de', 'ja', 'zh'];
 
-    // Process in smaller batches (fewer items per batch since we're translating to 7 languages)
-    const batchSize = 5;
+    // Process in parallel batches (10 concurrent batches of 100 items = 1000 items at a time)
+    const batchSize = 100;
+    const parallelBatches = 10;
     let processedCount = 0;
+    const batchGroups: FeedbackItem[][] = [];
 
+    // Create all batches first
     for (let i = 0; i < needsTranslation.length; i += batchSize) {
-      const batch = needsTranslation.slice(i, i + batchSize);
-      const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
+      batchGroups.push(needsTranslation.slice(i, i + batchSize));
+    }
 
-      try {
-        const response = await this.callGemini(apiKey, prompt);
-        const data = JSON.parse(response);
+    // Process batches in groups of 10 in parallel
+    for (let g = 0; g < batchGroups.length; g += parallelBatches) {
+      const parallelGroup = batchGroups.slice(g, g + parallelBatches);
 
-        for (const itemTranslation of data.items || []) {
-          results.set(itemTranslation.itemId, {
-            translations: itemTranslation.translations || {},
-            translatedTitles: itemTranslation.titles || undefined,
-          });
+      const parallelResults = await Promise.allSettled(
+        parallelGroup.map(async batch => {
+          const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
+          const response = await this.callGemini(apiKey, prompt);
+          return { batch, data: JSON.parse(response) };
+        })
+      );
+
+      // Process results from all parallel batches
+      for (const result of parallelResults) {
+        if (result.status === 'fulfilled') {
+          for (const itemTranslation of result.value.data.items || []) {
+            results.set(itemTranslation.itemId, {
+              translations: itemTranslation.translations || {},
+              translatedTitles: itemTranslation.titles || undefined,
+            });
+          }
+          processedCount += result.value.batch.length;
+        } else {
+          this.logger.error('Sentiment', 'Multi-language translation batch failed:', result.reason);
+          processedCount += batchSize; // Estimate
         }
-
-        processedCount += batch.length;
-        onProgress?.(processedCount, needsTranslation.length);
-        this.logger.debug('Sentiment', `Translated batch ${Math.floor(i / batchSize) + 1}, ${results.size} items total`);
-      } catch (error) {
-        this.logger.error('Sentiment', 'Multi-language translation batch failed:', error);
-        processedCount += batch.length;
-        onProgress?.(processedCount, needsTranslation.length);
       }
+
+      onProgress?.(processedCount, needsTranslation.length);
+      this.logger.debug('Sentiment', `Translated ${processedCount}/${needsTranslation.length} items`);
     }
 
     this.logger.info('Sentiment', `Translated ${results.size} items to all ${targetLanguages.length} languages`);

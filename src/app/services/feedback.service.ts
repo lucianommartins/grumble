@@ -251,56 +251,69 @@ export class FeedbackService {
    * Analyze items progressively (updates UI after each batch)
    */
   async analyzeAndGroup(items: FeedbackItem[]): Promise<void> {
-    const batchSize = 10;
+    const batchSize = 100;
     let processedCount = 0;
     const analyzedInThisSession: FeedbackItem[] = [];
 
     this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento 0 de ${items.length}...` });
 
     try {
-      // Process in batches, updating UI after each
+      // Process in parallel batches (10 concurrent batches of 100 items = 1000 items at a time)
+      const parallelBatches = 10;
+      const batchGroups: FeedbackItem[][] = [];
+
+      // Create all batches first
       for (let i = 0; i < items.length; i += batchSize) {
-        const batch = items.slice(i, i + batchSize);
+        batchGroups.push(items.slice(i, i + batchSize));
+      }
 
-        try {
-          const results = await this.sentiment.analyzeBatchDirect(batch);
+      // Process batches in groups of 10 in parallel
+      for (let g = 0; g < batchGroups.length; g += parallelBatches) {
+        const parallelGroup = batchGroups.slice(g, g + parallelBatches);
 
-          // Update items with this batch's results immediately
-          const updatedBatchItems: FeedbackItem[] = [];
-          this.items.update(allItems =>
-            allItems.map(item => {
-              const analysis = results.get(item.id);
-              if (analysis) {
-                const updated = {
-                  ...item,
-                  sentiment: analysis.sentiment,
-                  sentimentConfidence: analysis.sentimentConfidence,
-                  category: analysis.category,
-                  categoryConfidence: analysis.categoryConfidence,
-                  analyzed: true,
-                };
-                updatedBatchItems.push(updated);
-                return updated;
-              }
-              return item;
-            })
-          );
+        const parallelResults = await Promise.allSettled(
+          parallelGroup.map(batch => this.sentiment.analyzeBatchDirect(batch))
+        );
 
-          // Save this batch to Firebase immediately
-          if (updatedBatchItems.length > 0) {
-            await this.sharedFeedback.saveItems(updatedBatchItems);
-            analyzedInThisSession.push(...updatedBatchItems);
+        // Process results from all parallel batches
+        for (let j = 0; j < parallelResults.length; j++) {
+          const result = parallelResults[j];
+          if (result.status === 'fulfilled') {
+            const results = result.value;
+            const updatedBatchItems: FeedbackItem[] = [];
+
+            this.items.update(allItems =>
+              allItems.map(item => {
+                const analysis = results.get(item.id);
+                if (analysis) {
+                  const updated = {
+                    ...item,
+                    sentiment: analysis.sentiment,
+                    sentimentConfidence: analysis.sentimentConfidence,
+                    category: analysis.category,
+                    categoryConfidence: analysis.categoryConfidence,
+                    analyzed: true,
+                  };
+                  updatedBatchItems.push(updated);
+                  return updated;
+                }
+                return item;
+              })
+            );
+
+            if (updatedBatchItems.length > 0) {
+              await this.sharedFeedback.saveItems(updatedBatchItems);
+              analyzedInThisSession.push(...updatedBatchItems);
+            }
+          } else {
+            this.logger.error('Feedback', 'Parallel batch failed:', result.reason);
           }
-
-          processedCount += batch.length;
-          this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
-          this.logger.debug('Feedback', `Analyzed ${processedCount}/${items.length} items`);
-
-          // Small delay to allow UI to render
-          await new Promise(resolve => setTimeout(resolve, 50));
-        } catch (error) {
-          this.logger.error('Feedback', `Batch ${i / batchSize + 1} failed:`, error);
         }
+
+        // Update progress after each parallel group
+        processedCount = Math.min(processedCount + parallelBatches * batchSize, items.length);
+        this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
+        this.logger.debug('Feedback', `Analyzed ${processedCount}/${items.length} items`);
       }
 
       this.logger.info('Feedback', `Analysis complete. ${processedCount} items processed.`);
@@ -345,19 +358,40 @@ export class FeedbackService {
       // Create groups from analyzed items (after all batches)
       const analyzedItems = this.items().filter(i => i.analyzed);
       if (analyzedItems.length >= 10) {
-        this.syncStatus.set({ step: 'grouping', message: `Agrupando ${analyzedItems.length} itens...` });
+        this.syncStatus.set({ step: 'grouping', message: `Agrupando 0 de ${analyzedItems.length} itens...` });
         this.logger.info('Feedback', `Generating feedback groups for ${analyzedItems.length} items...`);
 
-        // Process in batches of 200 to avoid prompt size limits
+        // Process in parallel batches (10 concurrent batches of 200 items = 2000 items at a time)
         const groupBatchSize = 200;
+        const parallelGroupBatches = 10;
         const allGroups: FeedbackGroup[] = [];
+        const groupBatches: FeedbackItem[][] = [];
+        let groupedCount = 0;
 
+        // Create all batches first
         for (let i = 0; i < analyzedItems.length; i += groupBatchSize) {
-          const batch = analyzedItems.slice(i, i + groupBatchSize);
-          this.logger.debug('Feedback', `Grouping batch ${i / groupBatchSize + 1}: ${batch.length} items`);
+          groupBatches.push(analyzedItems.slice(i, i + groupBatchSize));
+        }
 
-          const batchGroups = await this.sentiment.groupSimilarItems(batch);
-          allGroups.push(...batchGroups);
+        // Process batches in groups of 10 in parallel
+        for (let g = 0; g < groupBatches.length; g += parallelGroupBatches) {
+          const parallelGroup = groupBatches.slice(g, g + parallelGroupBatches);
+
+          const parallelResults = await Promise.allSettled(
+            parallelGroup.map(batch => this.sentiment.groupSimilarItems(batch))
+          );
+
+          for (const result of parallelResults) {
+            if (result.status === 'fulfilled') {
+              allGroups.push(...result.value);
+            } else {
+              this.logger.error('Feedback', 'Grouping batch failed:', result.reason);
+            }
+          }
+
+          groupedCount = Math.min(groupedCount + parallelGroupBatches * groupBatchSize, analyzedItems.length);
+          this.syncStatus.set({ step: 'grouping', message: `Agrupando ${groupedCount} de ${analyzedItems.length} itens...` });
+          this.logger.debug('Feedback', `Grouped ${groupedCount}/${analyzedItems.length} items`);
         }
 
         // Consolidate similar groups from different batches
