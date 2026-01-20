@@ -73,6 +73,16 @@
     </div>
   </div>
 
+  <!-- Sync Status Modal -->
+  @if (feedbackService.syncStatus()) {
+  <div class="sync-status-modal">
+    <div class="sync-status-content">
+      <div class="sync-spinner"></div>
+      <div class="sync-message">{{ feedbackService.syncStatus()?.message }}</div>
+    </div>
+  </div>
+  }
+
   <!-- Loading state -->
   @if (isLoading()) {
   <div class="loading-container">

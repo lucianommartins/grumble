@@ -30,6 +30,7 @@ export class FeedbackService {
   items = signal<FeedbackItem[]>([]);
   groups = signal<FeedbackGroup[]>([]);
   isLoading = signal(false);
+  syncStatus = signal<{ step: string; message: string } | null>(null);
   lastSyncAt = signal<Date | null>(null);
 
   // Filter state
@@ -147,6 +148,7 @@ export class FeedbackService {
     if (this.isLoading()) return;
 
     this.isLoading.set(true);
+    this.syncStatus.set({ step: 'loading', message: 'Carregando cache...' });
     this.logger.info('Feedback', 'Starting sync from all sources...');
 
     try {
@@ -174,6 +176,7 @@ export class FeedbackService {
       const enabledTypes = this.enabledSourceTypes();
 
       // Fetch from all enabled sources in parallel (with since dates for incremental sync)
+      this.syncStatus.set({ step: 'fetching', message: 'Coletando das fontes...' });
       const promises: Promise<FeedbackItem[]>[] = [];
 
       if (enabledTypes.has('twitter-search')) {
@@ -305,6 +308,7 @@ export class FeedbackService {
       );
 
       if (itemsNeedingTranslation.length > 0) {
+        this.syncStatus.set({ step: 'translating', message: `Traduzindo ${itemsNeedingTranslation.length} itens...` });
         this.logger.info('Feedback', `Translating ${itemsNeedingTranslation.length} items to all 8 languages...`);
         const translations = await this.sentiment.translateToAllLanguages(itemsNeedingTranslation);
 
@@ -333,6 +337,7 @@ export class FeedbackService {
       // Create groups from analyzed items (after all batches)
       const analyzedItems = this.items().filter(i => i.analyzed);
       if (analyzedItems.length >= 10) {
+        this.syncStatus.set({ step: 'grouping', message: `Agrupando ${analyzedItems.length} itens...` });
         this.logger.info('Feedback', `Generating feedback groups for ${analyzedItems.length} items...`);
 
         // Process in batches of 200 to avoid prompt size limits
@@ -392,6 +397,9 @@ export class FeedbackService {
       this.logger.info('Feedback', 'Saved sync state for incremental fetching');
     } catch (error) {
       this.logger.error('Feedback', 'Analysis failed:', error);
+    } finally {
+      this.isLoading.set(false);
+      this.syncStatus.set(null);
     }
   }
 
