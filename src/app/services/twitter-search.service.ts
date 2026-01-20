@@ -82,11 +82,13 @@ export class TwitterSearchService {
   /**
    * Search tweets using Twitter API v2 Recent Search (single language)
    * Requires Basic tier ($100/mo) or higher
+   * @param since - Optional date to fetch only tweets newer than this
    */
   async searchTweets(
     query: string,
     language: string = 'en',
-    maxResults: number = 50
+    maxResults: number = 50,
+    since?: Date
   ): Promise<FeedbackItem[]> {
     const bearerToken = this.userSettings.getTwitterBearerToken();
 
@@ -106,6 +108,12 @@ export class TwitterSearchService {
       'user.fields': 'name,username,profile_image_url',
       expansions: 'author_id',
     });
+
+    // Add start_time for incremental sync
+    if (since) {
+      params.set('start_time', since.toISOString());
+      this.logger.debug('TwitterSearch', `Fetching tweets since ${since.toISOString()}`);
+    }
 
     try {
       const response = await fetch(`/api/twitter/tweets/search/recent?${params}`, {
@@ -141,11 +149,16 @@ export class TwitterSearchService {
   /**
    * Search all configured keywords across all languages
    * Searches each language separately for better coverage
+   * @param since - Optional date to fetch only tweets newer than this
    */
-  async searchAllKeywords(): Promise<FeedbackItem[]> {
+  async searchAllKeywords(since?: Date): Promise<FeedbackItem[]> {
     const enabledKeywords = this.keywords().filter(k => k.enabled);
     const allItems: FeedbackItem[] = [];
     const seenIds = new Set<string>();
+
+    if (since) {
+      this.logger.info('TwitterSearch', `Incremental fetch: only tweets since ${since.toISOString()}`);
+    }
 
     for (const keyword of enabledKeywords) {
       const languages = keyword.languages === 'all'
@@ -154,7 +167,7 @@ export class TwitterSearchService {
 
       // Search each language separately
       for (const lang of languages) {
-        const tweets = await this.searchTweets(keyword.term, lang, 50);
+        const tweets = await this.searchTweets(keyword.term, lang, 50, since);
 
         // Deduplicate across keywords and languages
         for (const tweet of tweets) {

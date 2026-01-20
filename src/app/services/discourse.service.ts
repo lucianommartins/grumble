@@ -74,8 +74,9 @@ export class DiscourseService {
 
   /**
    * Fetch latest topics from a Discourse forum
+   * @param since - Optional date to fetch only topics newer than this
    */
-  async fetchLatestTopics(baseUrl: string, limit: number = 30): Promise<FeedbackItem[]> {
+  async fetchLatestTopics(baseUrl: string, limit: number = 30, since?: Date): Promise<FeedbackItem[]> {
     const url = `${CORS_PROXY}${encodeURIComponent(`${baseUrl}/latest.json?per_page=${limit}`)}`;
 
     try {
@@ -91,9 +92,14 @@ export class DiscourseService {
       // Create user map for avatar lookup
       const userMap = new Map(users.map(u => [u.id, u]));
 
-      this.logger.debug('Discourse', `Fetched ${topics.length} topics from ${baseUrl}`);
+      // Client-side filter by date if 'since' is provided
+      const filtered = since
+        ? topics.filter(t => new Date(t.created_at) > since)
+        : topics;
 
-      return topics.map(topic => this.mapTopicToFeedback(topic, baseUrl, userMap));
+      this.logger.debug('Discourse', `Fetched ${filtered.length} topics from ${baseUrl}${since ? ' (incremental)' : ''}`);
+
+      return filtered.map(topic => this.mapTopicToFeedback(topic, baseUrl, userMap));
     } catch (error) {
       this.logger.error('Discourse', `Failed to fetch topics from ${baseUrl}:`, error);
       return [];
@@ -127,14 +133,15 @@ export class DiscourseService {
 
   /**
    * Fetch recent topics and their replies from all configured forums
+   * @param since - Optional date to fetch only items newer than this
    */
-  async fetchAllForums(includeReplies: boolean = true): Promise<FeedbackItem[]> {
+  async fetchAllForums(includeReplies: boolean = true, since?: Date): Promise<FeedbackItem[]> {
     const enabledConfigs = this.configs().filter(c => c.enabled);
     const allItems: FeedbackItem[] = [];
 
     for (const config of enabledConfigs) {
       // Fetch latest topics
-      const topics = await this.fetchLatestTopics(config.baseUrl);
+      const topics = await this.fetchLatestTopics(config.baseUrl, 30, since);
       allItems.push(...topics);
 
       // Optionally fetch replies for each topic (limited to avoid rate limits)

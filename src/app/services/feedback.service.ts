@@ -160,22 +160,39 @@ export class FeedbackService {
       // Load existing groups
       this.groups.set(existingGroups);
 
+      // Load sync state for incremental fetching
+      const syncState = await this.sharedFeedback.loadSyncState();
+      const isIncremental = syncState !== null;
+
+      if (isIncremental) {
+        this.logger.info('Feedback', `Incremental sync: fetching since ${syncState.lastSync.toISOString()}`);
+      } else {
+        this.logger.info('Feedback', 'Full sync: no previous sync state found');
+      }
+
       const allItems: FeedbackItem[] = [];
       const enabledTypes = this.enabledSourceTypes();
 
-      // Fetch from all enabled sources in parallel
+      // Fetch from all enabled sources in parallel (with since dates for incremental sync)
       const promises: Promise<FeedbackItem[]>[] = [];
 
       if (enabledTypes.has('twitter-search')) {
-        promises.push(this.twitterSearch.searchAllKeywords());
+        promises.push(this.twitterSearch.searchAllKeywords(syncState?.twitter || undefined));
       }
 
       if (enabledTypes.has('github-issue') || enabledTypes.has('github-discussion')) {
-        promises.push(this.github.fetchAllRepos());
+        // Use the later of issues/discussions sync dates
+        const githubSince = syncState
+          ? new Date(Math.min(
+            syncState.githubIssues?.getTime() || 0,
+            syncState.githubDiscussions?.getTime() || 0
+          ))
+          : undefined;
+        promises.push(this.github.fetchAllRepos(githubSince?.getTime() ? githubSince : undefined));
       }
 
       if (enabledTypes.has('discourse')) {
-        promises.push(this.discourse.fetchAllForums(false)); // Skip replies for initial sync
+        promises.push(this.discourse.fetchAllForums(false, syncState?.discourse || undefined)); // Skip replies for initial sync
       }
 
       const results = await Promise.allSettled(promises);
@@ -354,6 +371,25 @@ export class FeedbackService {
 
         this.logger.info('Feedback', `Created ${consolidatedGroups.length} consolidated feedback groups.`);
       }
+
+      // Save sync state for incremental fetching (use max publishedAt for each source type)
+      const now = new Date();
+      const twitterItems = this.items().filter(i => i.sourceType === 'twitter-search');
+      const issueItems = this.items().filter(i => i.sourceType === 'github-issue');
+      const discussionItems = this.items().filter(i => i.sourceType === 'github-discussion');
+      const discourseItems = this.items().filter(i => i.sourceType === 'discourse');
+
+      const maxDate = (items: FeedbackItem[]) =>
+        items.length > 0 ? new Date(Math.max(...items.map(i => i.publishedAt.getTime()))) : null;
+
+      await this.sharedFeedback.saveSyncState({
+        twitter: maxDate(twitterItems),
+        githubIssues: maxDate(issueItems),
+        githubDiscussions: maxDate(discussionItems),
+        discourse: maxDate(discourseItems),
+        lastSync: now,
+      });
+      this.logger.info('Feedback', 'Saved sync state for incremental fetching');
     } catch (error) {
       this.logger.error('Feedback', 'Analysis failed:', error);
     }

@@ -115,8 +115,9 @@ export class GitHubService {
 
   /**
    * Fetch discussions from a GitHub repository using GraphQL API
+   * @param since - Optional date to fetch only discussions newer than this
    */
-  async fetchDiscussions(owner: string, repo: string, limit: number = 50): Promise<FeedbackItem[]> {
+  async fetchDiscussions(owner: string, repo: string, limit: number = 50, since?: Date): Promise<FeedbackItem[]> {
     const pat = this.userSettings.getGithubPat();
 
     if (!pat) {
@@ -170,9 +171,15 @@ export class GitHubService {
       }
 
       const discussions = result.data?.repository?.discussions?.nodes || [];
-      this.logger.debug('GitHub', `Fetched ${discussions.length} discussions from ${owner}/${repo}`);
 
-      return discussions.map(disc => this.mapDiscussionToFeedback(disc, owner, repo));
+      // Client-side filter by date if 'since' is provided
+      const filtered = since
+        ? discussions.filter(d => new Date(d.createdAt) > since)
+        : discussions;
+
+      this.logger.debug('GitHub', `Fetched ${filtered.length} discussions from ${owner}/${repo}${since ? ' (incremental)' : ''}`);
+
+      return filtered.map(disc => this.mapDiscussionToFeedback(disc, owner, repo));
     } catch (error) {
       this.logger.error('GitHub', `Failed to fetch discussions from ${owner}/${repo}:`, error);
       return [];
@@ -193,7 +200,7 @@ export class GitHubService {
           allItems.push(...issues);
         }
         if (config.includeDiscussions) {
-          const discussions = await this.fetchDiscussions(config.owner, config.repo);
+          const discussions = await this.fetchDiscussions(config.owner, config.repo, 50, since);
           allItems.push(...discussions);
         }
       })

@@ -26,6 +26,11 @@ export class FeedbackDashboardComponent {
   isAnalyzing = signal(false);
   isDeleting = signal(false);
 
+  // Confirmation modal state
+  showConfirmModal = signal(false);
+  confirmMessage = signal('');
+  private confirmAction: (() => Promise<void>) | null = null;
+
   // Admin check for cache management features
   get isAdmin() {
     return this.authService.isAdmin();
@@ -227,35 +232,61 @@ export class FeedbackDashboardComponent {
   /**
    * Delete selected items from cache (Admin only)
    */
-  async deleteSelectedFromCache(): Promise<void> {
+  /**
+   * Delete selected items from cache (Admin only)
+   */
+  deleteSelectedFromCache(): void {
     if (!this.isAdmin) return;
 
     const count = this.feedbackService.selectedCount();
     if (count === 0) return;
 
-    if (!confirm(`Delete ${count} item(s) from cache?`)) return;
-
-    this.isDeleting.set(true);
-    try {
-      await this.feedbackService.deleteSelectedFromCache();
-    } finally {
-      this.isDeleting.set(false);
-    }
+    this.showConfirm(`Delete ${count} item(s) from cache?`, async () => {
+      this.isDeleting.set(true);
+      try {
+        await this.feedbackService.deleteSelectedFromCache();
+      } finally {
+        this.isDeleting.set(false);
+      }
+    });
   }
 
   /**
    * Clear all cache (Admin only)
    */
-  async clearAllCache(): Promise<void> {
+  clearAllCache(): void {
     if (!this.isAdmin) return;
 
-    if (!confirm('Clear ALL cached data? This will delete all items and groups from Firestore.')) return;
+    this.showConfirm('Clear ALL cached data? This will delete all items and groups from Firestore.', async () => {
+      this.isDeleting.set(true);
+      try {
+        await this.feedbackService.clearAllCache();
+      } finally {
+        this.isDeleting.set(false);
+      }
+    });
+  }
 
-    this.isDeleting.set(true);
-    try {
-      await this.feedbackService.clearAllCache();
-    } finally {
-      this.isDeleting.set(false);
+  // ============================================================
+  // Confirmation Modal Helpers
+  // ============================================================
+
+  private showConfirm(message: string, action: () => Promise<void>): void {
+    this.confirmMessage.set(message);
+    this.confirmAction = action;
+    this.showConfirmModal.set(true);
+  }
+
+  async doConfirm(): Promise<void> {
+    this.showConfirmModal.set(false);
+    if (this.confirmAction) {
+      await this.confirmAction();
+      this.confirmAction = null;
     }
+  }
+
+  cancelConfirm(): void {
+    this.showConfirmModal.set(false);
+    this.confirmAction = null;
   }
 }

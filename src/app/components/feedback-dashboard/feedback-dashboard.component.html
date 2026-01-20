@@ -178,3 +178,15 @@
   </div>
   }
 </div>
+<!-- Confirmation Modal -->
+@if (showConfirmModal()) {
+<div class="modal-overlay" (click)="cancelConfirm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-message">{{ confirmMessage() }}</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" (click)="cancelConfirm()">{{ i18n.t.common.cancel }}</button>
+      <button class="modal-btn confirm" (click)="doConfirm()">OK</button>
+    </div>
+  </div>
+</div>
+}

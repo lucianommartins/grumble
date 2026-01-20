@@ -1,7 +1,18 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, collection, doc, setDoc, getDocs, query, orderBy, limit, writeBatch, Timestamp, deleteDoc } from '@angular/fire/firestore';
+import { Firestore, collection, doc, setDoc, getDocs, getDoc, query, orderBy, limit, writeBatch, Timestamp, deleteDoc } from '@angular/fire/firestore';
 import { FeedbackItem, FeedbackGroup, Sentiment, FeedbackCategory, FeedbackSourceType } from '../models/feedback.model';
 import { LoggerService } from './logger.service';
+
+/**
+ * Sync state for incremental fetching
+ */
+export interface SyncState {
+  twitter: Date | null;
+  githubIssues: Date | null;
+  githubDiscussions: Date | null;
+  discourse: Date | null;
+  lastSync: Date;
+}
 
 /**
  * SharedFeedbackService manages shared Firestore collections
@@ -16,6 +27,7 @@ export class SharedFeedbackService {
 
   private readonly ITEMS_COLLECTION = 'feedback_items';
   private readonly GROUPS_COLLECTION = 'feedback_groups';
+  private readonly SYNC_STATE_DOC = 'config/sync_state';
 
   /**
    * Save analyzed items to Firestore (shared collection)
@@ -184,6 +196,56 @@ export class SharedFeedbackService {
     } catch (error) {
       this.logger.error('SharedFeedback', 'Failed to clear all items:', error);
       throw error;
+    }
+  }
+
+  // ============================================================
+  // Sync State (for incremental sync)
+  // ============================================================
+
+  /**
+   * Save sync state for incremental fetching
+   */
+  async saveSyncState(state: SyncState): Promise<void> {
+    try {
+      const docRef = doc(this.firestore, this.SYNC_STATE_DOC);
+      await setDoc(docRef, {
+        twitter: state.twitter ? Timestamp.fromDate(state.twitter) : null,
+        githubIssues: state.githubIssues ? Timestamp.fromDate(state.githubIssues) : null,
+        githubDiscussions: state.githubDiscussions ? Timestamp.fromDate(state.githubDiscussions) : null,
+        discourse: state.discourse ? Timestamp.fromDate(state.discourse) : null,
+        lastSync: Timestamp.fromDate(state.lastSync),
+      });
+      this.logger.info('SharedFeedback', 'Saved sync state');
+    } catch (error) {
+      this.logger.error('SharedFeedback', 'Failed to save sync state:', error);
+    }
+  }
+
+  /**
+   * Load sync state for incremental fetching
+   */
+  async loadSyncState(): Promise<SyncState | null> {
+    try {
+      const docRef = doc(this.firestore, this.SYNC_STATE_DOC);
+      const snapshot = await getDoc(docRef);
+
+      if (!snapshot.exists()) {
+        this.logger.info('SharedFeedback', 'No sync state found (first sync)');
+        return null;
+      }
+
+      const data = snapshot.data();
+      return {
+        twitter: data['twitter']?.toDate() || null,
+        githubIssues: data['githubIssues']?.toDate() || null,
+        githubDiscussions: data['githubDiscussions']?.toDate() || null,
+        discourse: data['discourse']?.toDate() || null,
+        lastSync: data['lastSync']?.toDate() || new Date(0),
+      };
+    } catch (error) {
+      this.logger.error('SharedFeedback', 'Failed to load sync state:', error);
+      return null;
     }
   }
 
