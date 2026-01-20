@@ -150,7 +150,8 @@ export class SentimentService {
    * Returns a map of itemId -> translations map (e.g., { en: '...', pt: '...', etc. })
    */
   async translateToAllLanguages(
-    items: FeedbackItem[]
+    items: FeedbackItem[],
+    onProgress?: (current: number, total: number) => void
   ): Promise<Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string> }>> {
     const results = new Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string> }>();
 
@@ -174,6 +175,8 @@ export class SentimentService {
 
     // Process in smaller batches (fewer items per batch since we're translating to 7 languages)
     const batchSize = 5;
+    let processedCount = 0;
+
     for (let i = 0; i < needsTranslation.length; i += batchSize) {
       const batch = needsTranslation.slice(i, i + batchSize);
       const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
@@ -189,9 +192,13 @@ export class SentimentService {
           });
         }
 
+        processedCount += batch.length;
+        onProgress?.(processedCount, needsTranslation.length);
         this.logger.debug('Sentiment', `Translated batch ${Math.floor(i / batchSize) + 1}, ${results.size} items total`);
       } catch (error) {
         this.logger.error('Sentiment', 'Multi-language translation batch failed:', error);
+        processedCount += batch.length;
+        onProgress?.(processedCount, needsTranslation.length);
       }
     }
 

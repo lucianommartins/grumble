@@ -255,6 +255,8 @@ export class FeedbackService {
     let processedCount = 0;
     const analyzedInThisSession: FeedbackItem[] = [];
 
+    this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento 0 de ${items.length}...` });
+
     try {
       // Process in batches, updating UI after each
       for (let i = 0; i < items.length; i += batchSize) {
@@ -291,6 +293,7 @@ export class FeedbackService {
           }
 
           processedCount += batch.length;
+          this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
           this.logger.debug('Feedback', `Analyzed ${processedCount}/${items.length} items`);
 
           // Small delay to allow UI to render
@@ -308,9 +311,14 @@ export class FeedbackService {
       );
 
       if (itemsNeedingTranslation.length > 0) {
-        this.syncStatus.set({ step: 'translating', message: `Traduzindo ${itemsNeedingTranslation.length} itens...` });
+        this.syncStatus.set({ step: 'translating', message: `Traduzindo 0 de ${itemsNeedingTranslation.length}...` });
         this.logger.info('Feedback', `Translating ${itemsNeedingTranslation.length} items to all 8 languages...`);
-        const translations = await this.sentiment.translateToAllLanguages(itemsNeedingTranslation);
+        const translations = await this.sentiment.translateToAllLanguages(
+          itemsNeedingTranslation,
+          (current, total) => {
+            this.syncStatus.set({ step: 'translating', message: `Traduzindo ${current} de ${total}...` });
+          }
+        );
 
         if (translations.size > 0) {
           this.items.update(allItems =>
