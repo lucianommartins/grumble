@@ -2,7 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { FeedbackItem, SearchKeyword, DEFAULT_KEYWORDS } from '../models/feedback.model';
 import { UserSettingsService } from './user-settings.service';
 import { LoggerService } from './logger.service';
-import { RetryService } from './retry.service';
 import { I18nService } from '../i18n';
 
 interface TwitterSearchResult {
@@ -62,7 +61,6 @@ const TWITTER_LANG_MAP: Record<string, string> = {
 export class TwitterSearchService {
   private userSettings = inject(UserSettingsService);
   private logger = inject(LoggerService);
-  private retry = inject(RetryService);
   private i18n = inject(I18nService);
 
   // Configuration
@@ -119,19 +117,16 @@ export class TwitterSearchService {
     });
 
     try {
-      const response = await this.retry.withRetry(async () => {
-        const res = await fetch(`/api/twitter/tweets/search/recent?${params}`, {
-          headers: {
-            'X-Twitter-Bearer-Token': bearerToken,
-          },
-        });
+      const response = await fetch(`/api/twitter/tweets/search/recent?${params}`, {
+        headers: {
+          'X-Twitter-Bearer-Token': bearerToken,
+        },
+      });
 
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(`Twitter Search API error: ${res.status} - ${JSON.stringify(errorData)}`);
-        }
-        return res;
-      }, {}, `Twitter Search: ${query}`);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Twitter Search API error: ${response.status} - ${JSON.stringify(errorData)}`);
+      }
 
       const data: TwitterSearchResponse = await response.json();
 

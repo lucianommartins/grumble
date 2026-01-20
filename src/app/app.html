@@ -12,6 +12,11 @@
     <div class="header-brand">
       <img src="/logo.png" alt="Grumble" class="logo-img" />
       <h1 class="app-title gradient-text">Grumble</h1>
+      @if (authService.isAdmin()) {
+      <span class="role-badge role-admin">Admin</span>
+      } @else {
+      <span class="role-badge role-reporter">Reporter</span>
+      }
     </div>
     <div class="header-right">
       <div class="header-badge">

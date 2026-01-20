@@ -2,7 +2,6 @@ import { Injectable, inject, signal } from '@angular/core';
 import { FeedbackItem, GitHubRepoConfig, DEFAULT_GITHUB_REPOS } from '../models/feedback.model';
 import { UserSettingsService } from './user-settings.service';
 import { LoggerService } from './logger.service';
-import { RetryService } from './retry.service';
 
 interface GitHubIssue {
   id: number;
@@ -52,7 +51,6 @@ const GITHUB_GRAPHQL = 'https://api.github.com/graphql';
 export class GitHubService {
   private userSettings = inject(UserSettingsService);
   private logger = inject(LoggerService);
-  private retry = inject(RetryService);
 
   // Configuration
   repos = signal<GitHubRepoConfig[]>([]);
@@ -96,13 +94,10 @@ export class GitHubService {
     const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues?${params}`;
 
     try {
-      const response = await this.retry.withRetry(async () => {
-        const res = await fetch(url, { headers });
-        if (!res.ok) {
-          throw new Error(`GitHub API error: ${res.status}`);
-        }
-        return res;
-      }, {}, `GitHub Issues ${owner}/${repo}`);
+      const response = await fetch(url, { headers });
+      if (!response.ok) {
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
 
       const issues: GitHubIssue[] = await response.json();
 
@@ -151,24 +146,21 @@ export class GitHubService {
     `;
 
     try {
-      const response = await this.retry.withRetry(async () => {
-        const res = await fetch(GITHUB_GRAPHQL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${pat}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query,
-            variables: { owner, repo, first: limit }
-          })
-        });
+      const response = await fetch(GITHUB_GRAPHQL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${pat}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          variables: { owner, repo, first: limit }
+        })
+      });
 
-        if (!res.ok) {
-          throw new Error(`GitHub GraphQL error: ${res.status}`);
-        }
-        return res;
-      }, {}, `GitHub Discussions ${owner}/${repo}`);
+      if (!response.ok) {
+        throw new Error(`GitHub GraphQL error: ${response.status}`);
+      }
 
       const result: GitHubGraphQLResponse = await response.json();
 

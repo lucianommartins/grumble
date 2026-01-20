@@ -1,4 +1,4 @@
-// Grumble Localization - Latin American Spanish (es)
+// Grumble Localization - Spanish (es)
 // Traducciones naturales para español latinoamericano
 
 import { LocaleStrings } from './en';
@@ -21,14 +21,7 @@ export const es: LocaleStrings = {
     disable: 'Desactivar',
     edit: 'Editar',
     delete: 'Eliminar',
-    image: 'Imagen',
-    video: 'Video',
-    originalMedia: 'Multimedia Original',
-    aiGenerated: 'Generado por IA',
     confirm: 'Confirmar',
-    sources: 'Fuentes',
-    feed: 'Feed',
-    content: 'Contenido',
   },
 
   // Autenticación
@@ -36,150 +29,36 @@ export const es: LocaleStrings = {
     signIn: 'Iniciar sesión con Google',
     signOut: 'Cerrar sesión',
     signingIn: 'Iniciando sesión...',
-    domainRestriction: '⚠️ Acceso restringido a correos @google.com',
-    authError: 'Error de autenticación',
+    domainRestriction: '⚠️ Acceso restringido a emails @google.com',
+    authError: 'Falló la autenticación',
     notAuthenticated: 'Usuario no autenticado',
   },
 
   // Configuración
   settings: {
     title: '⚙️ Configuración',
-    description: 'Configura tus claves de API para usar Grumble. Las claves se almacenan de forma segura y están vinculadas a tu cuenta.',
+    description: 'Configura tus claves de API para usar Grumble. Las claves se almacenan de forma segura y se asocian a tu cuenta.',
     geminiApiKey: '🔑 Clave de API Gemini',
-    geminiHint: 'Obtener en',
+    geminiHint: 'Obtén en',
     geminiLinkText: 'Google AI Studio',
     twitterBearerToken: '🐦 Token de Twitter',
-    twitterHint: 'Obtener en',
+    twitterHint: 'Obtén en',
     twitterHintSuffix: '. Sin este token, las fuentes de Twitter estarán deshabilitadas.',
     twitterLinkText: 'Portal de Desarrolladores de Twitter',
     savedSuccess: '✅ ¡Configuración guardada!',
     saveError: 'Error al guardar configuración',
     geminiInvalid: 'Gemini: Clave de API inválida',
-    geminiValidationError: 'Gemini: Error de validación',
+    geminiValidationError: 'Gemini: Falló la validación',
     twitterInvalid: 'Twitter: Token inválido',
-    twitterValidationError: 'Twitter: Error de validación',
+    twitterValidationError: 'Twitter: Falló la validación',
     language: 'Idioma',
-  },
-
-  // Barra Lateral
-  sidebar: {
-    timeWindow: 'PERÍODO',
-    sources: 'FUENTES',
-    addSource: 'Agregar fuente',
-    editSource: 'Editar Fuente',
-    newSource: 'Nueva Fuente',
-    noSources: 'No hay fuentes agregadas.',
-    noSourcesHint: 'Haz clic en + para agregar una.',
-    enableAll: 'Activar todas',
-    syncSources: 'Sincronizar',
-    syncing: 'Sincronizando...',
-    feedNamePlaceholder: 'Nombre del feed',
-    feedUrlPlaceholder: '@usuario o URL',
-    typeTwitter: 'Twitter/X',
-    typeRss: 'Feed RSS',
-    typeBlog: 'Blog (scraping)',
-    typeYoutube: 'YouTube',
-    autoDetected: 'Auto-detectado',
-    howItWorks: 'Cómo funciona',
-    howStep1: 'Sincroniza datos de tus fuentes',
-    howStep2: 'Selecciona las actualizaciones interesantes',
-    howStep3: 'Genera un hilo optimizado para interacción',
-    showOnlyThis: 'Mostrar solo esta fuente',
-    editSource2: 'Editar fuente',
-    removeSource: 'Eliminar fuente',
-    duplicateError: 'Ya existe una fuente con esta URL.',
-  },
-
-  // Panel de Feed
-  feed: {
-    loadedItems: 'elementos cargados',
-    markIrrelevant: 'Marcar como irrelevante',
-    noItems: 'Sin elementos aún',
-    noItemsHint: 'Sincroniza tus fuentes para ver contenido aquí.',
-    selectToGenerate: 'Selecciona elementos y haz clic en Generar Hilo',
-    hideUsedItems: 'Ocultar elementos usados',
-    minutesAgo: 'min atrás',
-    hoursAgo: 'h atrás',
-    daysAgo: 'd hace',
-    justNow: 'ahora',
-    alsoIn: 'También en:',
-    confirmDelete: 'Eliminar {count} elementos seleccionados?',
-    selectAll: 'Seleccionar todos',
-    clear: 'Limpiar',
-    sort: 'Ordenar:',
-    date: 'Fecha',
-    source: 'Fuente',
-    used: 'Usado',
-    selected: 'seleccionados',
-    list: 'Lista',
-    cards: 'Tarjetas',
-    byDate: 'Por fecha',
-    bySource: 'Por fuente',
-    deleteSelected: 'Eliminar elementos seleccionados',
-    switchToLight: 'Cambiar a Modo Claro',
-    switchToDark: 'Cambiar a Modo Oscuro',
-    feedUpdates: 'Actualizaciones de Feed',
-  },
-
-  // Panel de Contenido (antes Panel de Hilo)
-  content: {
-    title: 'Generador de Contenido',
-    noContent: 'Ningún contenido generado',
-    selectItems: 'Selecciona elementos del feed y haz clic en Generar',
-    generateContent: 'Generar Contenido',
-    selectPlatforms: 'Selecciona las plataformas',
-    generating: 'Generando...',
-    generatingOptimized: 'Creando contenido optimizado...',
-    generatingHint: 'Analizando contenido y creando publicaciones optimizadas',
-    regenerate: 'Regenerar',
-    copyToClipboard: 'Copiar',
-    copied: '¡Copiado!',
-    post: 'Publicación',
-    tweet: 'Tweet',
-    addMedia: 'Agregar multimedia',
-    generatingImage: 'Generando imagen...',
-    generatingVideo: 'Generando video...',
-    generatingVideoMinutes: 'Generando video (puede tardar unos minutos)...',
-    generatingVideoProgress: 'Generando video...',
-    videoSuccess: '¡Video generado con éxito!',
-    startingVideo: 'Iniciando generación del video...',
-    urlContext: 'URLs adicionales para contexto',
-    urlPlaceholder: 'Pega URLs aquí, una por línea',
-    urlHint: 'Las URLs adicionales se usarán para enriquecer el contenido',
-    regenerateMedia: 'Regenerar multimedia',
-    generate: 'Generar',
-    comment: 'Comentario',
-    referenceLink: 'Enlace de referencia',
-  },
-
-  // Plataformas
-  platforms: {
-    twitter: 'Twitter',
-    linkedin: 'LinkedIn',
-    threads: 'Threads',
-    bluesky: 'BlueSky',
-    selectAtLeastOne: 'Selecciona al menos una plataforma',
-  },
-
-  // Multimedia
-  media: {
-    generatingImage: 'Generando imagen...',
-    generatingVideo: 'Generando video...',
-    tabTitle: 'Multimedia',
-    assetsTitle: 'Assets Multimedia',
-    noAssets: 'Sin assets',
-    generateAll: 'Generar Todos',
-    downloadAll: 'Descargar Todos',
-    linkedinHint: 'LinkedIn acepta solo 1 multimedia. Elige imagen o video.',
-    imageFor: 'Imagen para',
-    videoFor: 'Video para',
   },
 
   // Errores
   errors: {
     geminiKeyRequired: 'Clave de API Gemini no configurada. Configúrala en ⚙️ Configuración.',
     twitterTokenRequired: 'Token de Twitter no configurado. Configúralo en ⚙️ Configuración.',
-    networkError: 'Error de conexión. Verifica tu internet.',
+    networkError: 'Error de red. Verifica tu conexión.',
     unknownError: 'Ocurrió un error inesperado.',
   },
 
@@ -191,34 +70,20 @@ export const es: LocaleStrings = {
     contentsGenerated: 'contenidos generados',
   },
 
-  // Inicio de Sesión
+  // Inicio de sesión
   login: {
     welcome: 'Bienvenido a',
     appName: 'Grumble',
-    tagline: 'Transforma contenido en hilos atractivos para Twitter',
+    tagline: 'Monitorea y analiza feedback de usuarios sobre la API Gemini',
     feature1Title: 'Multi-fuente',
-    feature1Desc: 'Agrega Twitter, RSS y blogs',
+    feature1Desc: 'Agrega de Twitter, GitHub y Foros',
     feature2Title: 'IA Avanzada',
-    feature2Desc: 'Genera hilos con Gemini 3',
-    feature3Title: 'Multimedia',
-    feature3Desc: 'Crea imágenes y videos con IA',
+    feature2Desc: 'Análisis de sentimiento con Gemini 3',
+    feature3Title: 'Agrupación Inteligente',
+    feature3Desc: 'Agrupa feedbacks similares automáticamente',
   },
 
-  // Contenido Adhoc
-  adhoc: {
-    button: 'Contenido Adhoc',
-    title: 'Generar desde URL o Imagen',
-    urlPlaceholder: 'Pega una URL (blog, docs, GitHub, YouTube...)',
-    uploadImage: 'Subir imagen',
-    dropImage: 'Arrastra la imagen aquí o haz clic para subir',
-    generate: 'Generar',
-    processing: 'Procesando contenido...',
-    errorUrlNotAccessible: 'URL no accesible. Intenta con otro enlace.',
-    errorNoInput: 'Proporciona una URL o imagen.',
-    errorGeneration: 'Error al generar contenido. Intenta de nuevo.',
-  },
-
-  // Grumble-specific
+  // Grumble-específico
   grumble: {
     total: 'Total',
     positive: 'Positivo',

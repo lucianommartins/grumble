@@ -1,7 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { FeedbackItem, DiscourseConfig, DEFAULT_DISCOURSE } from '../models/feedback.model';
 import { LoggerService } from './logger.service';
-import { RetryService } from './retry.service';
 
 interface DiscourseTopic {
   id: number;
@@ -56,7 +55,6 @@ const CORS_PROXY = 'https://corsproxy.io/?';
 })
 export class DiscourseService {
   private logger = inject(LoggerService);
-  private retry = inject(RetryService);
 
   // Configuration
   configs = signal<DiscourseConfig[]>([]);
@@ -81,13 +79,10 @@ export class DiscourseService {
     const url = `${CORS_PROXY}${encodeURIComponent(`${baseUrl}/latest.json?per_page=${limit}`)}`;
 
     try {
-      const response = await this.retry.withRetry(async () => {
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`Discourse API error: ${res.status}`);
-        }
-        return res;
-      }, {}, `Discourse ${baseUrl}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Discourse API error: ${response.status}`);
+      }
 
       const data: DiscourseLatestResponse = await response.json();
       const topics = data.topic_list?.topics || [];
@@ -112,13 +107,10 @@ export class DiscourseService {
     const url = `${CORS_PROXY}${encodeURIComponent(`${baseUrl}/t/${topicSlug}/${topicId}.json`)}`;
 
     try {
-      const response = await this.retry.withRetry(async () => {
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`Discourse topic fetch error: ${res.status}`);
-        }
-        return res;
-      }, {}, `Discourse topic ${topicId}`);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Discourse topic fetch error: ${response.status}`);
+      }
 
       const data: DiscourseTopicResponse = await response.json();
       const posts = data.post_stream?.posts || [];

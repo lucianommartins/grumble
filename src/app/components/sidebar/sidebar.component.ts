@@ -7,6 +7,7 @@ import { GitHubService } from '../../services/github.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { FeedbackSourceType, Sentiment } from '../../models/feedback.model';
 import { I18nService } from '../../i18n';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -21,6 +22,7 @@ export class SidebarComponent {
   githubService = inject(GitHubService);
   userSettings = inject(UserSettingsService);
   i18n = inject(I18nService);
+  authService = inject(AuthService);
 
   @Output() openSettings = new EventEmitter<void>();
 

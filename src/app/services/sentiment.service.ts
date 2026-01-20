@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { FeedbackItem, Sentiment, FeedbackCategory, FeedbackGroup, FeedbackSourceType } from '../models/feedback.model';
 import { UserSettingsService } from './user-settings.service';
 import { LoggerService } from './logger.service';
-import { RetryService } from './retry.service';
 
 interface AnalysisResult {
   sentiment: Sentiment;
@@ -37,7 +36,6 @@ interface GroupingResult {
 export class SentimentService {
   private userSettings = inject(UserSettingsService);
   private logger = inject(LoggerService);
-  private retry = inject(RetryService);
 
   private readonly MODEL = 'gemini-3-flash-preview';
 
@@ -262,24 +260,21 @@ Skip items that don't fit any group.`;
   private async callGemini(apiKey: string, prompt: string): Promise<string> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`;
 
-    const response = await this.retry.withRetry(async () => {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0.2,
-          }
-        })
-      });
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+        }
+      })
+    });
 
-      if (!res.ok) {
-        throw new Error(`Gemini API error: ${res.status}`);
-      }
-      return res;
-    }, {}, 'Gemini Analysis');
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
 
     const data = await response.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';

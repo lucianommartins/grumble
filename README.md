@@ -94,6 +94,27 @@ grumble/
 - Each user's keys are stored in their own Firestore document
 - Access restricted to `@google.com` domain
 
+## 👥 User Roles
+
+Grumble supports two user roles managed via Firestore:
+
+| Role | Badge | Permissions |
+|------|-------|-------------|
+| **Admin** | 🔴 Red | Can sync sources, analyze feedback |
+| **Reporter** | 🟢 Green | Can only view/analyze cached data |
+
+### Configuring Admins
+
+Create the following structure in Firestore:
+
+```
+Collection: config
+  └── Document: roles
+        └── admins: ["email1@google.com", "email2@google.com"]
+```
+
+Users whose emails are in the `admins` array will be Admins; all others are Reporters.
+
 ## 📄 License
 
 Apache License 2.0

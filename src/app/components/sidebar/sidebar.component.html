@@ -106,10 +106,15 @@
   }
 
   <!-- Sync Button -->
-  <button class="btn btn-primary btn-full sync-button" (click)="onSync()" [disabled]="feedbackService.isLoading()">
+  <button class="btn btn-primary btn-full sync-button" (click)="onSync()"
+    [disabled]="feedbackService.isLoading() || authService.isReporter()"
+    [title]="authService.isReporter() ? 'Reporters cannot sync sources' : ''">
     @if (feedbackService.isLoading()) {
     <span class="spinner"></span>
     <span>{{ i18n.t.grumble.syncing }}</span>
+    } @else if (authService.isReporter()) {
+    <span class="sync-icon">🔒</span>
+    <span>{{ i18n.t.grumble.syncAllSources }}</span>
     } @else {
     <span class="sync-icon">🔄</span>
     <span>{{ i18n.t.grumble.syncAllSources }}</span>
