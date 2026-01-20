@@ -115,6 +115,7 @@ export const en = {
     delete: 'Delete',
     deleting: 'Deleting...',
     clearCache: 'Clear Cache',
+    clearCacheConfirm: 'Clear ALL cached data? This will delete all items and groups from Firestore.',
     languageNames: {
       en: 'English',
       pt: 'Portuguese',

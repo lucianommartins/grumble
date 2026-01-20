@@ -117,6 +117,7 @@ export const de: LocaleStrings = {
     delete: 'Löschen',
     deleting: 'Löschen...',
     clearCache: 'Cache leeren',
+    clearCacheConfirm: 'ALLE gecachten Daten löschen? Dies löscht alle Elemente und Gruppen aus Firestore.',
     languageNames: {
       en: 'Englisch',
       pt: 'Portugiesisch',

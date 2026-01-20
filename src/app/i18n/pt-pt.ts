@@ -117,6 +117,7 @@ export const ptPT: LocaleStrings = {
     delete: 'Eliminar',
     deleting: 'A eliminar...',
     clearCache: 'Limpar Cache',
+    clearCacheConfirm: 'Limpar TODOS os dados em cache? Isso apagará todos os itens e grupos do Firestore.',
     languageNames: {
       en: 'Inglês',
       pt: 'Português',

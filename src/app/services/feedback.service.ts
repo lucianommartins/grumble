@@ -267,24 +267,37 @@ export class FeedbackService {
         batchGroups.push(items.slice(i, i + batchSize));
       }
 
+      this.logger.info('Feedback', `Starting analysis: ${batchGroups.length} batches of ${batchSize} items, ${parallelBatches} in parallel`);
+
       // Process batches in groups of 10 in parallel
       for (let g = 0; g < batchGroups.length; g += parallelBatches) {
         const parallelGroup = batchGroups.slice(g, g + parallelBatches);
+        const groupStartIndex = g;
+        this.logger.info('Feedback', `[Group ${Math.floor(g / parallelBatches) + 1}] Starting ${parallelGroup.length} batches in parallel...`);
 
-        const parallelResults = await Promise.allSettled(
-          parallelGroup.map(batch => this.sentiment.analyzeBatchDirect(batch))
-        );
+        // Wrap each batch to update progress as it completes
+        const wrappedPromises = parallelGroup.map(async (batch, batchIndex) => {
+          const batchNum = groupStartIndex + batchIndex + 1;
+          this.logger.debug('Feedback', `[Batch ${batchNum}] Sending ${batch.length} items to Gemini...`);
 
-        // Process results from all parallel batches
-        for (let j = 0; j < parallelResults.length; j++) {
-          const result = parallelResults[j];
-          if (result.status === 'fulfilled') {
-            const results = result.value;
+          try {
+            const results = await this.sentiment.analyzeBatchDirect(batch);
+            this.logger.debug('Feedback', `[Batch ${batchNum}] Received ${results.size} results`);
+            return { success: true, results, batch };
+          } catch (error) {
+            this.logger.error('Feedback', `[Batch ${batchNum}] Failed:`, error);
+            return { success: false, results: new Map(), batch, error };
+          }
+        });
+
+        // Process as they complete (not waiting for all)
+        for await (const result of wrappedPromises) {
+          if (result.success) {
             const updatedBatchItems: FeedbackItem[] = [];
 
             this.items.update(allItems =>
               allItems.map(item => {
-                const analysis = results.get(item.id);
+                const analysis = result.results.get(item.id);
                 if (analysis) {
                   const updated = {
                     ...item,
@@ -305,15 +318,15 @@ export class FeedbackService {
               await this.sharedFeedback.saveItems(updatedBatchItems);
               analyzedInThisSession.push(...updatedBatchItems);
             }
-          } else {
-            this.logger.error('Feedback', 'Parallel batch failed:', result.reason);
           }
+
+          // Update progress after EACH batch completes
+          processedCount += result.batch.length;
+          this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
+          this.logger.debug('Feedback', `Progress: ${processedCount}/${items.length} items analyzed`);
         }
 
-        // Update progress after each parallel group
-        processedCount = Math.min(processedCount + parallelBatches * batchSize, items.length);
-        this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
-        this.logger.debug('Feedback', `Analyzed ${processedCount}/${items.length} items`);
+        this.logger.info('Feedback', `[Group ${Math.floor(g / parallelBatches) + 1}] Complete. Total: ${processedCount}/${items.length}`);
       }
 
       this.logger.info('Feedback', `Analysis complete. ${processedCount} items processed.`);

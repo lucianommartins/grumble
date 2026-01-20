@@ -117,6 +117,7 @@ export const zh: LocaleStrings = {
     delete: '删除',
     deleting: '删除中...',
     clearCache: '清除缓存',
+    clearCacheConfirm: '清除所有缓存数据？这将从Firestore中删除所有项目和分组。',
     languageNames: {
       en: '英语',
       pt: '葡萄牙语',

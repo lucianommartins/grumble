@@ -117,6 +117,7 @@ export const ja: LocaleStrings = {
     delete: '削除',
     deleting: '削除中...',
     clearCache: 'キャッシュをクリア',
+    clearCacheConfirm: 'すべてのキャッシュデータを削除しますか？Firestoreからすべてのアイテムとグループが削除されます。',
     languageNames: {
       en: '英語',
       pt: 'ポルトガル語',

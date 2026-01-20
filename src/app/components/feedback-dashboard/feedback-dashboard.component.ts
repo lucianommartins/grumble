@@ -257,7 +257,7 @@ export class FeedbackDashboardComponent {
   clearAllCache(): void {
     if (!this.isAdmin) return;
 
-    this.showConfirm('Clear ALL cached data? This will delete all items and groups from Firestore.', async () => {
+    this.showConfirm(this.i18n.t.grumble.clearCacheConfirm, async () => {
       this.isDeleting.set(true);
       try {
         await this.feedbackService.clearAllCache();
