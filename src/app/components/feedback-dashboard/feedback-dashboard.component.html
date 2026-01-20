@@ -55,6 +55,19 @@
         <button class="action-btn analyze" (click)="analyzeSelected()" [disabled]="isAnalyzing()">
           {{ isAnalyzing() ? '⏳ ' + i18n.t.grumble.analyzing : '🧠 ' + i18n.t.grumble.analyze + ' (' + selectedCount() + ')' }}
         </button>
+        <!-- Admin Only: Delete Selected -->
+        @if (isAdmin) {
+        <button class="action-btn delete" (click)="deleteSelectedFromCache()" [disabled]="isDeleting()">
+          {{ isDeleting() ? '⏳...' : '🗑️ Delete (' + selectedCount() + ')' }}
+        </button>
+        }
+        }
+        
+        <!-- Admin Only: Clear All Cache -->
+        @if (isAdmin) {
+        <button class="action-btn clear-cache" (click)="clearAllCache()" [disabled]="isDeleting()">
+          {{ isDeleting() ? '⏳...' : '🧹 Clear Cache' }}
+        </button>
         }
       </div>
     </div>
@@ -101,13 +114,18 @@
       </div>
 
       <!-- Title (if exists) -->
-      @if (item.title) {
-      <div class="item-title">{{ item.title }}</div>
+      @if (item.title || item.translatedTitles) {
+      <div class="item-title">{{ getTranslatedTitle(item) }}</div>
       }
 
       <!-- Content -->
       <div class="item-content">
+        @if (getTranslatedContent(item)) {
+        <span class="translated-prefix">({{ i18n.t.grumble.translatedFrom }} {{ getLanguageName(item.language) }})</span>
+        {{ truncateContent(getTranslatedContent(item)!, 300) }}
+        } @else {
         {{ truncateContent(item.content, 300) }}
+        }
       </div>
 
       <!-- Author -->

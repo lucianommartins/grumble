@@ -146,19 +146,20 @@ export class SentimentService {
   }
 
   /**
-   * Translate feedback items to target language
-   * Only translates items where language differs from target
+   * Translate feedback items to ALL 8 supported languages at sync time
+   * Returns a map of itemId -> translations map (e.g., { en: '...', pt: '...', etc. })
    */
-  async translateItems(
-    items: FeedbackItem[],
-    targetLang: string
-  ): Promise<Map<string, { translatedContent: string; translatedTitle?: string }>> {
-    const results = new Map<string, { translatedContent: string; translatedTitle?: string }>();
+  async translateToAllLanguages(
+    items: FeedbackItem[]
+  ): Promise<Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string> }>> {
+    const results = new Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string> }>();
 
-    // Filter items that need translation
-    const needsTranslation = items.filter(item =>
-      item.language && item.language !== targetLang && !item.translatedContent
+    // Only translate items that don't already have translations
+    const needsTranslation = items.filter(item => 
+      item.language && !item.translations
     );
+
+    this.logger.debug('Sentiment', `Items needing translation to all languages: ${needsTranslation.length}`);
 
     if (needsTranslation.length === 0) {
       return results;
@@ -169,29 +170,91 @@ export class SentimentService {
       return results;
     }
 
-    // Process in smaller batches for translation
-    const batchSize = 10;
+    const targetLanguages = ['en', 'pt', 'es', 'fr', 'de', 'ja', 'zh'];
+
+    // Process in smaller batches (fewer items per batch since we're translating to 7 languages)
+    const batchSize = 5;
     for (let i = 0; i < needsTranslation.length; i += batchSize) {
       const batch = needsTranslation.slice(i, i + batchSize);
-      const prompt = this.buildTranslationPrompt(batch, targetLang);
+      const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
 
       try {
         const response = await this.callGemini(apiKey, prompt);
         const data = JSON.parse(response);
 
-        for (const translation of data.translations || []) {
-          results.set(translation.itemId, {
-            translatedContent: translation.content,
-            translatedTitle: translation.title || undefined,
+        for (const itemTranslation of data.items || []) {
+          results.set(itemTranslation.itemId, {
+            translations: itemTranslation.translations || {},
+            translatedTitles: itemTranslation.titles || undefined,
           });
         }
+
+        this.logger.debug('Sentiment', `Translated batch ${Math.floor(i / batchSize) + 1}, ${results.size} items total`);
       } catch (error) {
-        this.logger.error('Sentiment', 'Translation batch failed:', error);
+        this.logger.error('Sentiment', 'Multi-language translation batch failed:', error);
       }
     }
 
-    this.logger.info('Sentiment', `Translated ${results.size} items to ${targetLang}`);
+    this.logger.info('Sentiment', `Translated ${results.size} items to all ${targetLanguages.length} languages`);
     return results;
+  }
+
+  private buildMultiLanguageTranslationPrompt(items: FeedbackItem[], targetLangs: string[]): string {
+    const langNames: Record<string, string> = {
+      'en': 'English', 'pt': 'Portuguese', 'es': 'Spanish',
+      'fr': 'French', 'de': 'German', 'ja': 'Japanese', 'zh': 'Chinese',
+    };
+
+    const itemsText = items.map(item => `
+[ITEM] ID: ${item.id}
+SOURCE_LANG: ${item.language}
+${item.title ? `TITLE: ${item.title}` : ''}
+CONTENT: ${item.content.substring(0, 400)}
+---`).join('\n');
+
+    const targetsList = targetLangs.map(l => `${l} (${langNames[l]})`).join(', ');
+
+    return `Translate these feedback items to ALL of these languages: ${targetsList}.
+Skip translating to the same language as SOURCE_LANG.
+
+${itemsText}
+
+Respond in JSON:
+{
+  "items": [
+    {
+      "itemId": "the item ID",
+      "translations": {
+        "en": "English translation",
+        "pt": "Portuguese translation",
+        "es": "Spanish translation",
+        "fr": "French translation",
+        "de": "German translation",
+        "ja": "Japanese translation",
+        "zh": "Chinese translation"
+      },
+      "titles": { ... same structure if title exists ... }
+    }
+  ]
+}
+
+Keep translations natural. Preserve technical terms. Skip the source language.`;
+  }
+
+  /**
+   * Normalize language codes for comparison
+   * Maps variations to base codes (pt-br -> pt, zh-cn -> zh, etc.)
+   */
+  private normalizeLanguageCode(lang: string): string {
+    const code = lang.toLowerCase();
+    if (code.startsWith('pt')) return 'pt';
+    if (code.startsWith('zh')) return 'zh';
+    if (code.startsWith('en')) return 'en';
+    if (code.startsWith('es')) return 'es';
+    if (code.startsWith('fr')) return 'fr';
+    if (code.startsWith('de')) return 'de';
+    if (code.startsWith('ja')) return 'ja';
+    return code;
   }
 
   private buildTranslationPrompt(items: FeedbackItem[], targetLang: string): string {

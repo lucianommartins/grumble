@@ -282,15 +282,14 @@ export class FeedbackService {
 
       this.logger.info('Feedback', `Analysis complete. ${processedCount} items processed.`);
 
-      // Translate items in non-user language to user's Grumble language
-      const userLang = this.i18n.getLocale();
+      // Translate items to ALL 8 languages at sync time
       const itemsNeedingTranslation = this.items().filter(i =>
-        i.language && i.language !== userLang && !i.translatedContent
+        i.language && !i.translations
       );
 
       if (itemsNeedingTranslation.length > 0) {
-        this.logger.info('Feedback', `Translating ${itemsNeedingTranslation.length} items to ${userLang}...`);
-        const translations = await this.sentiment.translateItems(itemsNeedingTranslation, userLang);
+        this.logger.info('Feedback', `Translating ${itemsNeedingTranslation.length} items to all 8 languages...`);
+        const translations = await this.sentiment.translateToAllLanguages(itemsNeedingTranslation);
 
         if (translations.size > 0) {
           this.items.update(allItems =>
@@ -299,18 +298,18 @@ export class FeedbackService {
               if (translation) {
                 return {
                   ...item,
-                  translatedContent: translation.translatedContent,
-                  translatedTitle: translation.translatedTitle,
+                  translations: translation.translations,
+                  translatedTitles: translation.translatedTitles,
                 };
               }
               return item;
             })
           );
 
-          // Save translated items to Firebase
-          const translatedItems = this.items().filter(i => i.translatedContent);
+          // Save translated items to Firestore for caching (all users benefit)
+          const translatedItems = this.items().filter(i => i.translations);
           await this.sharedFeedback.saveItems(translatedItems);
-          this.logger.info('Feedback', `Saved ${translations.size} translated items`);
+          this.logger.info('Feedback', `Saved ${translations.size} items with translations to all languages`);
         }
       }
 
@@ -534,7 +533,43 @@ export class FeedbackService {
   /**
    * Get items for a specific group
    */
+  /**
+   * Get items for a specific group
+   */
   getGroupItems(groupId: string): FeedbackItem[] {
     return this.items().filter(item => item.groupId === groupId);
+  }
+
+  // ============================================================
+  // Cache Management (Admin Only)
+  // ============================================================
+
+  /**
+   * Delete selected items from Firestore cache
+   */
+  async deleteSelectedFromCache(): Promise<number> {
+    const selected = this.selectedItems();
+    if (selected.length === 0) return 0;
+
+    const ids = selected.map(item => item.id);
+    await this.sharedFeedback.deleteItems(ids);
+
+    // Remove from local state
+    this.items.update(items => items.filter(item => !item.selected));
+    this.logger.info('Feedback', `Deleted ${ids.length} items from cache`);
+
+    return ids.length;
+  }
+
+  /**
+   * Clear ALL cached data from Firestore (items + groups)
+   */
+  async clearAllCache(): Promise<void> {
+    await this.sharedFeedback.clearAllItems();
+
+    // Clear local state
+    this.items.set([]);
+    this.groups.set([]);
+    this.logger.info('Feedback', 'Cleared all cached data');
   }
 }

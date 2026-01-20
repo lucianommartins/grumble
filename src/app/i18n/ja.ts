@@ -113,5 +113,15 @@ export const ja: LocaleStrings = {
     issues: 'Issues',
     discussions: 'ディスカッション',
     forum: 'フォーラム',
+    translatedFrom: '翻訳元',
+    languageNames: {
+      en: '英語',
+      pt: 'ポルトガル語',
+      es: 'スペイン語',
+      fr: 'フランス語',
+      de: 'ドイツ語',
+      ja: '日本語',
+      zh: '中国語',
+    },
   },
 };

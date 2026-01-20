@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FeedbackService } from '../../services/feedback.service';
 import { SentimentService } from '../../services/sentiment.service';
 import { ThemeService } from '../../services/theme.service';
+import { AuthService } from '../../services/auth.service';
 import { FeedbackItem, Sentiment, FeedbackCategory, SENTIMENT_COLORS, CATEGORY_LABELS, FeedbackSourceType } from '../../models/feedback.model';
 import { I18nService } from '../../i18n';
 import { SkeletonItemComponent } from '../skeleton-item/skeleton-item.component';
@@ -18,10 +19,17 @@ export class FeedbackDashboardComponent {
   feedbackService = inject(FeedbackService);
   sentimentService = inject(SentimentService);
   themeService = inject(ThemeService);
+  authService = inject(AuthService);
   i18n = inject(I18nService);
 
   viewMode = signal<'cards' | 'list'>('list');
   isAnalyzing = signal(false);
+  isDeleting = signal(false);
+
+  // Admin check for cache management features
+  get isAdmin() {
+    return this.authService.isAdmin();
+  }
 
   // Get filtered items from service
   get items() {
@@ -169,5 +177,85 @@ export class FeedbackDashboardComponent {
 
   toggleTheme(): void {
     this.themeService.toggle();
+  }
+
+  /**
+   * Get localized language name from i18n strings
+   */
+  getLanguageName(langCode?: string): string {
+    if (!langCode) return '';
+    // Normalize to base code (pt-br -> pt, zh-cn -> zh)
+    const baseCode = langCode.toLowerCase().split('-')[0];
+    const languageNames = this.i18n.t.grumble.languageNames as Record<string, string> | undefined;
+    return languageNames?.[baseCode] || langCode;
+  }
+
+  /**
+   * Get translated content for current user's language
+   * Returns null if content is in user's language (no translation needed)
+   */
+  getTranslatedContent(item: FeedbackItem): string | null {
+    if (!item.translations) return null;
+
+    // Get user's locale and normalize (pt-br -> pt)
+    const userLang = this.i18n.getLocale();
+    const normalizedUserLang = userLang.toLowerCase().split('-')[0];
+    const sourceLang = item.language?.toLowerCase().split('-')[0];
+
+    // If source language is same as user language, no translation needed
+    if (sourceLang === normalizedUserLang) return null;
+
+    return item.translations[normalizedUserLang] || null;
+  }
+
+  /**
+   * Get translated or original title
+   */
+  getTranslatedTitle(item: FeedbackItem): string {
+    if (!item.translatedTitles) return item.title || '';
+
+    const userLang = this.i18n.getLocale();
+    const normalizedUserLang = userLang.toLowerCase().split('-')[0];
+
+    return item.translatedTitles[normalizedUserLang] || item.title || '';
+  }
+
+  // ============================================================
+  // Cache Management (Admin Only)
+  // ============================================================
+
+  /**
+   * Delete selected items from cache (Admin only)
+   */
+  async deleteSelectedFromCache(): Promise<void> {
+    if (!this.isAdmin) return;
+
+    const count = this.feedbackService.selectedCount();
+    if (count === 0) return;
+
+    if (!confirm(`Delete ${count} item(s) from cache?`)) return;
+
+    this.isDeleting.set(true);
+    try {
+      await this.feedbackService.deleteSelectedFromCache();
+    } finally {
+      this.isDeleting.set(false);
+    }
+  }
+
+  /**
+   * Clear all cache (Admin only)
+   */
+  async clearAllCache(): Promise<void> {
+    if (!this.isAdmin) return;
+
+    if (!confirm('Clear ALL cached data? This will delete all items and groups from Firestore.')) return;
+
+    this.isDeleting.set(true);
+    try {
+      await this.feedbackService.clearAllCache();
+    } finally {
+      this.isDeleting.set(false);
+    }
   }
 }

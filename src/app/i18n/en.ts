@@ -111,6 +111,16 @@ export const en = {
     issues: 'Issues',
     discussions: 'Discussions',
     forum: 'Forum',
+    translatedFrom: 'Translated from',
+    languageNames: {
+      en: 'English',
+      pt: 'Portuguese',
+      es: 'Spanish',
+      fr: 'French',
+      de: 'German',
+      ja: 'Japanese',
+      zh: 'Chinese',
+    },
   },
 };
 

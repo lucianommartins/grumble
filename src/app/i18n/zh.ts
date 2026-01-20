@@ -113,5 +113,15 @@ export const zh: LocaleStrings = {
     issues: 'Issues',
     discussions: '讨论',
     forum: '论坛',
+    translatedFrom: '翻译自',
+    languageNames: {
+      en: '英语',
+      pt: '葡萄牙语',
+      es: '西班牙语',
+      fr: '法语',
+      de: '德语',
+      ja: '日语',
+      zh: '中文',
+    },
   },
 };

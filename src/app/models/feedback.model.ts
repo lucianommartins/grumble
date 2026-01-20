@@ -58,9 +58,10 @@ export interface FeedbackItem {
   state?: 'open' | 'closed';
   repo?: string;                  // e.g., "python-genai"
 
-  // Translation (populated when content language differs from user's language)
-  translatedContent?: string;     // Content translated to user's language
-  translatedTitle?: string;       // Title translated to user's language
+  // Pre-translated content for all 8 languages (populated at sync time)
+  // Keys: 'en', 'pt', 'es', 'fr', 'de', 'ja', 'zh'
+  translations?: Record<string, string>;  // { en: '...', pt: '...', etc. }
+  translatedTitles?: Record<string, string>;
 
   // UI state
   selected: boolean;

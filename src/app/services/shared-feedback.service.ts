@@ -128,6 +128,65 @@ export class SharedFeedbackService {
     }
   }
 
+  /**
+   * Delete specific items by ID
+   */
+  async deleteItems(itemIds: string[]): Promise<void> {
+    if (itemIds.length === 0) return;
+
+    try {
+      const itemsRef = collection(this.firestore, this.ITEMS_COLLECTION);
+
+      // Firestore batch limit is 500, process in chunks
+      const chunkSize = 500;
+      for (let i = 0; i < itemIds.length; i += chunkSize) {
+        const chunk = itemIds.slice(i, i + chunkSize);
+        const batch = writeBatch(this.firestore);
+
+        for (const itemId of chunk) {
+          const docRef = doc(itemsRef, itemId);
+          batch.delete(docRef);
+        }
+
+        await batch.commit();
+      }
+
+      this.logger.info('SharedFeedback', `Deleted ${itemIds.length} items from cache`);
+    } catch (error) {
+      this.logger.error('SharedFeedback', 'Failed to delete items:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear ALL cached data (items + groups)
+   */
+  async clearAllItems(): Promise<void> {
+    try {
+      // Delete all items
+      const itemsRef = collection(this.firestore, this.ITEMS_COLLECTION);
+      const itemsSnapshot = await getDocs(itemsRef);
+
+      const chunkSize = 500;
+      const itemDocs = itemsSnapshot.docs;
+
+      for (let i = 0; i < itemDocs.length; i += chunkSize) {
+        const chunk = itemDocs.slice(i, i + chunkSize);
+        const batch = writeBatch(this.firestore);
+        chunk.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      }
+
+      this.logger.info('SharedFeedback', `Cleared ${itemDocs.length} items from cache`);
+
+      // Also clear groups
+      await this.clearGroups();
+    } catch (error) {
+      this.logger.error('SharedFeedback', 'Failed to clear all items:', error);
+      throw error;
+    }
+  }
+
   private serializeItem(item: FeedbackItem): Record<string, any> {
     return {
       id: item.id,

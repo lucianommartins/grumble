@@ -113,5 +113,15 @@ export const ptBR: LocaleStrings = {
     issues: 'Issues',
     discussions: 'Discussões',
     forum: 'Fórum',
+    translatedFrom: 'Traduzido de',
+    languageNames: {
+      en: 'Inglês',
+      pt: 'Português',
+      es: 'Espanhol',
+      fr: 'Francês',
+      de: 'Alemão',
+      ja: 'Japonês',
+      zh: 'Chinês',
+    },
   },
 };
