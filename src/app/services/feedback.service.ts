@@ -324,6 +324,8 @@ export class FeedbackService {
           processedCount += result.batch.length;
           this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
           this.logger.debug('Feedback', `Progress: ${processedCount}/${items.length} items analyzed`);
+          // Force UI update
+          await new Promise(resolve => setTimeout(resolve, 0));
         }
 
         this.logger.info('Feedback', `[Group ${Math.floor(g / parallelBatches) + 1}] Complete. Total: ${processedCount}/${items.length}`);

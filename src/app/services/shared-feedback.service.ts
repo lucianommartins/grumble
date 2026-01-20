@@ -277,6 +277,8 @@ export class SharedFeedbackService {
       repo: item.repo || null,
       analyzed: item.analyzed,
       dismissed: item.dismissed,
+      translations: item.translations || null,
+      translatedTitles: item.translatedTitles || null,
       updatedAt: Timestamp.now(),
     };
   }
@@ -310,6 +312,8 @@ export class SharedFeedbackService {
       selected: false,
       analyzed: data['analyzed'] || false,
       dismissed: data['dismissed'] || false,
+      translations: data['translations'] || undefined,
+      translatedTitles: data['translatedTitles'] || undefined,
     };
   }
 
