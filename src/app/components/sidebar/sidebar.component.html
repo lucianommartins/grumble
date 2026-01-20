@@ -91,7 +91,7 @@
 <!-- Sentiment Filter for Groups -->
 <div class="sentiment-filter">
   <button class="sentiment-btn" [class.active]="!selectedGroupSentiment()"
-    (click)="selectedGroupSentiment.set(null)">Todos</button>
+    (click)="selectedGroupSentiment.set(null)">{{ i18n.t.grumble.all }}</button>
   <button class="sentiment-btn positive" [class.active]="selectedGroupSentiment() === 'positive'"
     (click)="selectedGroupSentiment.set('positive')">😊</button>
   <button class="sentiment-btn neutral" [class.active]="selectedGroupSentiment() === 'neutral'"
