@@ -114,6 +114,9 @@ export const ja: LocaleStrings = {
     discussions: 'ディスカッション',
     forum: 'フォーラム',
     translatedFrom: '翻訳元',
+    delete: '削除',
+    deleting: '削除中...',
+    clearCache: 'キャッシュをクリア',
     languageNames: {
       en: '英語',
       pt: 'ポルトガル語',

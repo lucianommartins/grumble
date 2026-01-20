@@ -114,6 +114,9 @@ export const es: LocaleStrings = {
     discussions: 'Discusiones',
     forum: 'Foro',
     translatedFrom: 'Traducido de',
+    delete: 'Eliminar',
+    deleting: 'Eliminando...',
+    clearCache: 'Limpiar Caché',
     languageNames: {
       en: 'Inglés',
       pt: 'Portugués',

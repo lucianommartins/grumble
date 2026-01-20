@@ -114,6 +114,9 @@ export const ptBR: LocaleStrings = {
     discussions: 'Discussões',
     forum: 'Fórum',
     translatedFrom: 'Traduzido de',
+    delete: 'Deletar',
+    deleting: 'Deletando...',
+    clearCache: 'Limpar Cache',
     languageNames: {
       en: 'Inglês',
       pt: 'Português',

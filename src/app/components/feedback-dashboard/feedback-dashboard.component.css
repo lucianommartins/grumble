@@ -157,6 +157,23 @@
   opacity: 0.9;
 }
 
+.action-btn.delete {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+}
+
+.action-btn.delete:hover {
+  opacity: 0.9;
+}
+
+.action-btn.clear-cache {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  color: white;
+}
+
+.action-btn.clear-cache:hover {
+  opacity: 0.9;
+}
 .action-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

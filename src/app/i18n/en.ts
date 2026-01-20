@@ -112,6 +112,9 @@ export const en = {
     discussions: 'Discussions',
     forum: 'Forum',
     translatedFrom: 'Translated from',
+    delete: 'Delete',
+    deleting: 'Deleting...',
+    clearCache: 'Clear Cache',
     languageNames: {
       en: 'English',
       pt: 'Portuguese',

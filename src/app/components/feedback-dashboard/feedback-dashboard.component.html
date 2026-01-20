@@ -58,7 +58,7 @@
         <!-- Admin Only: Delete Selected -->
         @if (isAdmin) {
         <button class="action-btn delete" (click)="deleteSelectedFromCache()" [disabled]="isDeleting()">
-          {{ isDeleting() ? '⏳...' : '🗑️ Delete (' + selectedCount() + ')' }}
+          {{ isDeleting() ? '⏳ ' + i18n.t.grumble.deleting : '🗑️ ' + i18n.t.grumble.delete + ' (' + selectedCount() + ')' }}
         </button>
         }
         }
@@ -66,7 +66,7 @@
         <!-- Admin Only: Clear All Cache -->
         @if (isAdmin) {
         <button class="action-btn clear-cache" (click)="clearAllCache()" [disabled]="isDeleting()">
-          {{ isDeleting() ? '⏳...' : '🧹 Clear Cache' }}
+          {{ isDeleting() ? '⏳ ' + i18n.t.grumble.deleting : '🧹 ' + i18n.t.grumble.clearCache }}
         </button>
         }
       </div>
