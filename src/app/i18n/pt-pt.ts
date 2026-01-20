@@ -98,7 +98,7 @@ export const ptPT: LocaleStrings = {
     items: 'itens',
     openOriginal: 'Abrir original',
     dismiss: 'Dispensar',
-    syncAllSources: 'Sincronizar Todas as Fontes',
+    syncAllSources: 'Sincronizar todas\nas fontes',
     syncing: 'A sincronizar...',
     feedbackGroups: 'Grupos de Feedback',
     clear: 'Limpar',

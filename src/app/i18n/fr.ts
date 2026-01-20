@@ -98,7 +98,7 @@ export const fr: LocaleStrings = {
     items: 'éléments',
     openOriginal: 'Ouvrir l\'original',
     dismiss: 'Ignorer',
-    syncAllSources: 'Synchroniser Toutes les Sources',
+    syncAllSources: 'Synchroniser toutes\nles sources',
     syncing: 'Synchronisation...',
     feedbackGroups: 'Groupes de Feedback',
     clear: 'Effacer',

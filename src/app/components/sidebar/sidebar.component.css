@@ -505,6 +505,8 @@
 .sync-button {
   padding: var(--spacing-md);
   font-size: var(--font-size-md);
+  white-space: pre-wrap;
+    text-align: center;
 }
 
 .sync-icon {
