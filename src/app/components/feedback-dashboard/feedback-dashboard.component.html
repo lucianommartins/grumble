@@ -1,0 +1,162 @@
+<div class="feedback-dashboard">
+  <!-- Header with stats and controls -->
+  <div class="dashboard-header">
+    <div class="stats-bar">
+      <div class="stat">
+        <span class="stat-value">{{ stats().total }}</span>
+        <span class="stat-label">Total</span>
+      </div>
+      <div class="stat positive">
+        <span class="stat-value">{{ stats().positive }}</span>
+        <span class="stat-label">😊 Positive</span>
+      </div>
+      <div class="stat neutral">
+        <span class="stat-value">{{ stats().neutral }}</span>
+        <span class="stat-label">😐 Neutral</span>
+      </div>
+      <div class="stat negative">
+        <span class="stat-value">{{ stats().negative }}</span>
+        <span class="stat-label">😤 Negative</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <!-- Source type filters -->
+      <div class="source-filters">
+        @for (source of sourceFilters(); track source.type) {
+        <button class="filter-btn" [class.active]="source.enabled" (click)="toggleSourceType(source.type)">
+          {{ source.label }}
+        </button>
+        }
+      </div>
+
+      <!-- Sentiment filter -->
+      <div class="sentiment-filters">
+        <button class="sentiment-btn" [class.active]="selectedSentiment() === null" (click)="setSentimentFilter(null)">
+          All
+        </button>
+        <button class="sentiment-btn positive" [class.active]="selectedSentiment() === 'positive'"
+          (click)="setSentimentFilter('positive')">
+          😊
+        </button>
+        <button class="sentiment-btn neutral" [class.active]="selectedSentiment() === 'neutral'"
+          (click)="setSentimentFilter('neutral')">
+          😐
+        </button>
+        <button class="sentiment-btn negative" [class.active]="selectedSentiment() === 'negative'"
+          (click)="setSentimentFilter('negative')">
+          😤
+        </button>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        @if (selectedCount() > 0) {
+        <button class="action-btn analyze" (click)="analyzeSelected()" [disabled]="isAnalyzing()">
+          {{ isAnalyzing() ? '⏳ Analyzing...' : '🧠 Analyze (' + selectedCount() + ')' }}
+        </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  @if (isLoading()) {
+  <div class="loading-container">
+    @for (i of [1,2,3,4,5]; track i) {
+    <app-skeleton-item />
+    }
+  </div>
+  }
+
+  <!-- Empty state -->
+  @if (!isLoading() && items().length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">🔍</div>
+    <h3>No feedback yet</h3>
+    <p>Click Sync to fetch feedback from all sources</p>
+  </div>
+  }
+
+  <!-- Feedback list -->
+  @if (!isLoading() && items().length > 0) {
+  <div class="results-header">
+    <h2 class="results-title">📋 Feedback Results</h2>
+    <span class="results-count">{{ items().length }} items</span>
+  </div>
+  <div class="feedback-list" [class.cards]="viewMode() === 'cards'">
+    @for (item of items(); track item.id) {
+    <div class="feedback-item" [class.selected]="item.selected" [class.analyzed]="item.analyzed"
+      (click)="toggleItem(item)">
+
+      <!-- Source badge with link -->
+      <div class="item-source">
+        <span class="source-icon">{{ getSourceIcon(item.sourceType) }}</span>
+        <span class="source-name">{{ item.sourceName }}</span>
+        <a class="source-link" [href]="item.url" target="_blank" (click)="$event.stopPropagation()"
+          title="Open original">
+          🔗
+        </a>
+        <span class="item-time">{{ formatDate(item.publishedAt) }}</span>
+      </div>
+
+      <!-- Title (if exists) -->
+      @if (item.title) {
+      <div class="item-title">{{ item.title }}</div>
+      }
+
+      <!-- Content -->
+      <div class="item-content">
+        {{ truncateContent(item.content, 300) }}
+      </div>
+
+      <!-- Author -->
+      <div class="item-author">
+        @if (item.authorAvatar) {
+        <img class="author-avatar" [src]="item.authorAvatar" alt="">
+        }
+        <span class="author-name">{{ item.author }}</span>
+        @if (item.authorHandle) {
+        <span class="author-handle">@{{ item.authorHandle }}</span>
+        }
+      </div>
+
+      <!-- Badges (sentiment + category) -->
+      <div class="item-badges">
+        @if (item.sentiment) {
+        <span class="badge sentiment" [class]="getSentimentClass(item.sentiment)">
+          {{ getSentimentIcon(item.sentiment) }}
+        </span>
+        }
+        @if (item.category) {
+        <span class="badge category">
+          {{ getCategoryLabel(item.category).icon }} {{ getCategoryLabel(item.category).label }}
+        </span>
+        }
+        @if (item.replyCount && item.replyCount > 0) {
+        <span class="badge meta">💬 {{ item.replyCount }}</span>
+        }
+        @if (item.reactionCount && item.reactionCount > 0) {
+        <span class="badge meta">❤️ {{ item.reactionCount }}</span>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="item-actions">
+        <button class="mini-btn" (click)="openUrl(item.url, $event)" title="Open">
+          🔗
+        </button>
+        <button class="mini-btn" (click)="dismissItem(item, $event)" title="Dismiss">
+          ✕
+        </button>
+      </div>
+
+      <!-- Selection indicator -->
+      <div class="selection-indicator">
+        {{ item.selected ? '✓' : '' }}
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>

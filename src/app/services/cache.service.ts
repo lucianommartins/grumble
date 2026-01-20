@@ -4,7 +4,7 @@ import { CachedItem, FeedItem } from '../models/feed.model';
 import { AuthService } from './auth.service';
 import { LoggerService } from './logger.service';
 
-const DB_NAME = 'devpulse-cache';
+const DB_NAME = 'grumble-cache';
 const DB_VERSION = 1;
 const STORE_NAME = 'cached-items';
 const FIRESTORE_COLLECTION = 'cachedItems';

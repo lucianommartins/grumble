@@ -10,16 +10,19 @@
   <!-- Header -->
   <header class="app-header">
     <div class="header-brand">
-      <img src="/logo.png" alt="DevPulse" class="logo-img" />
-      <h1 class="app-title gradient-text">DevPulse</h1>
+      <img src="/logo.png" alt="Grumble" class="logo-img" />
+      <h1 class="app-title gradient-text">Grumble</h1>
     </div>
     <div class="header-right">
       <div class="header-badge">
         <span class="badge-icon">✨</span>
-        <span>{{ i18n.t.header.poweredBy }}</span>
+        <span>Powered by Gemini 3.0 Flash</span>
       </div>
       @if (authService.currentUser(); as user) {
       <div class="user-menu">
+        <button class="settings-btn" (click)="themeService.toggle()" title="Toggle theme">
+          {{ themeService.isDark() ? '☀️' : '🌙' }}
+        </button>
         <button class="settings-btn" (click)="showSettings.set(true)" [title]="i18n.t.header.settings">
           ⚙️
         </button>
@@ -36,44 +39,14 @@
     </div>
   </header>
 
-  <!-- Mobile Tab Bar -->
-  @if (isMobile()) {
-  <nav class="mobile-tabs">
-    <button class="mobile-tab" [class.active]="activeTab() === 'sources'" (click)="activeTab.set('sources')">
-      <span class="tab-icon">📡</span>
-      <span class="tab-label">{{ i18n.t.common.sources || 'Sources' }}</span>
-    </button>
-    <button class="mobile-tab" [class.active]="activeTab() === 'feed'" (click)="activeTab.set('feed')">
-      <span class="tab-icon">📰</span>
-      <span class="tab-label">{{ i18n.t.common.feed || 'Feed' }}</span>
-    </button>
-    @if (hasGeneratedContent()) {
-    <button class="mobile-tab" [class.active]="activeTab() === 'content'" (click)="activeTab.set('content')">
-      <span class="tab-icon">✨</span>
-      <span class="tab-label">{{ i18n.t.common.content || 'Content' }}</span>
-    </button>
-    }
-  </nav>
-  }
-
-  <!-- Main Content -->
-  <main class="app-main">
-    @if (!isMobile() || activeTab() === 'sources') {
-    <app-sidebar [style.width.px]="isMobile() ? null : sidebarWidth()"
+  <!-- Main Content - Two column layout with resizable sidebar -->
+  <main class="app-main grumble-layout">
+    <app-sidebar class="grumble-sidebar" [style.width.px]="sidebarWidth()"
       (openSettings)="showSettings.set(true)"></app-sidebar>
-    }
-    @if (!isMobile()) {
-    <div class="resize-handle" (mousedown)="startResize($event, 'left')"></div>
-    }
-    @if (!isMobile() || activeTab() === 'feed') {
-    <app-feed-dashboard></app-feed-dashboard>
-    }
-    @if (!isMobile()) {
-    <div class="resize-handle" (mousedown)="startResize($event, 'right')"></div>
-    }
-    @if (!isMobile() || activeTab() === 'content') {
-    <app-thread-panel [style.width.px]="isMobile() ? null : threadPanelWidth()"></app-thread-panel>
-    }
+    <div class="resize-divider" (mousedown)="startResize($event)" (dblclick)="resetSidebarWidth()">
+      <div class="resize-handle"></div>
+    </div>
+    <app-feedback-dashboard class="grumble-dashboard"></app-feedback-dashboard>
   </main>
 </div>
 

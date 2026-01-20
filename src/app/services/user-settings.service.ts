@@ -7,12 +7,14 @@ import { LoggerService } from './logger.service';
 export interface UserSettings {
   twitterBearerToken?: string;
   geminiApiKey?: string;
+  githubPat?: string;  // GitHub Personal Access Token for Issues/Discussions
 }
 
 // Internal encrypted format stored in Firestore
 interface EncryptedSettings {
   encryptedGeminiApiKey?: string;
   encryptedTwitterToken?: string;
+  encryptedGithubPat?: string;
   encryptionVersion: number;
 }
 
@@ -128,6 +130,10 @@ export class UserSettingsService {
       encrypted.encryptedTwitterToken = await this.crypto.encrypt(settings.twitterBearerToken);
     }
 
+    if (settings.githubPat) {
+      encrypted.encryptedGithubPat = await this.crypto.encrypt(settings.githubPat);
+    }
+
     return encrypted;
   }
 
@@ -147,6 +153,14 @@ export class UserSettingsService {
         settings.twitterBearerToken = await this.crypto.decrypt(encrypted.encryptedTwitterToken);
       } catch (err) {
         this.logger.warn('UserSettings', 'Failed to decrypt Twitter token');
+      }
+    }
+
+    if (encrypted.encryptedGithubPat) {
+      try {
+        settings.githubPat = await this.crypto.decrypt(encrypted.encryptedGithubPat);
+      } catch (err) {
+        this.logger.warn('UserSettings', 'Failed to decrypt GitHub PAT');
       }
     }
 
@@ -172,5 +186,13 @@ export class UserSettingsService {
 
   getGeminiApiKey(): string | undefined {
     return this.settings()?.geminiApiKey;
+  }
+
+  getGithubPat(): string | undefined {
+    return this.settings()?.githubPat;
+  }
+
+  hasGithubPat(): boolean {
+    return !!this.settings()?.githubPat;
   }
 }

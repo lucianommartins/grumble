@@ -1,4 +1,4 @@
-// DevPulse Localization - Japanese (ja)
+// Grumble Localization - Japanese (ja)
 // 日本語翻訳
 
 import { LocaleStrings } from './en';
@@ -44,7 +44,7 @@ export const ja: LocaleStrings = {
   // 設定
   settings: {
     title: '⚙️ 設定',
-    description: 'DevPulse を使用するための API キーを設定してください。キーは安全に保存され、アカウントに紐付けられます。',
+    description: 'Grumble を使用するための API キーを設定してください。キーは安全に保存され、アカウントに紐付けられます。',
     geminiApiKey: '🔑 Gemini API キー',
     geminiHint: '取得先：',
     geminiLinkText: 'Google AI Studio',
@@ -194,7 +194,7 @@ export const ja: LocaleStrings = {
   // ログイン
   login: {
     welcome: 'ようこそ',
-    appName: 'DevPulse',
+    appName: 'Grumble',
     tagline: 'コンテンツをバイラルな Twitter スレッドに変換',
     feature1Title: 'マルチソース',
     feature1Desc: 'Twitter、RSS、ブログを集約',

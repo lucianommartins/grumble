@@ -1,6 +1,6 @@
 #!/bin/bash
-# DevPulse Cloud Run Deployment Script
-# Run this from the project root directory (devpulse/)
+# Grumble Cloud Run Deployment Script
+# Run this from the project root directory (grumble/)
 
 set -e
 
@@ -8,7 +8,7 @@ set -e
 # CONFIGURATION
 # ============================================
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT:-lucianomartins-demos-345000}"
-SERVICE_NAME="devpulse"
+SERVICE_NAME="grumble"
 REGION="us-central1"
 
 # Firebase Configuration - read from local environment.prod.ts
@@ -42,7 +42,7 @@ fi
 # ============================================
 # DEPLOYMENT
 # ============================================
-echo "🚀 DevPulse Cloud Run Deployment"
+echo "🚀 Grumble Cloud Run Deployment"
 echo "================================"
 echo "Project: ${PROJECT_ID}"
 echo "Service: ${SERVICE_NAME}"
@@ -51,7 +51,7 @@ echo ""
 
 # Check if we're in the right directory
 if [ ! -f "package.json" ]; then
-    echo "❌ Error: Run this script from the devpulse/ root directory"
+    echo "❌ Error: Run this script from the grumble/ root directory"
     exit 1
 fi
 
@@ -108,5 +108,5 @@ echo "📍 Your service URL:"
 gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format='value(status.url)'
 echo ""
 echo "📝 Next steps:"
-echo "   1. Configure your custom domain: gcloud beta run domain-mappings create --service=${SERVICE_NAME} --domain=YOUR_DOMAIN --region=${REGION}"
+echo "   1. Configure custom domain: gcloud beta run domain-mappings create --service=${SERVICE_NAME} --domain=grumble.lmm.ai --region=${REGION}"
 echo "   2. Update DNS records in GoDaddy as shown in Cloud Console"

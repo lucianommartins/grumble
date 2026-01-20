@@ -1,4 +1,4 @@
-// DevPulse Localization - European Portuguese (pt-PT)
+// Grumble Localization - European Portuguese (pt-PT)
 // Traduções naturais para português de Portugal
 
 import { LocaleStrings } from './en';
@@ -44,7 +44,7 @@ export const ptPT: LocaleStrings = {
   // Definições
   settings: {
     title: '⚙️ Definições',
-    description: 'Configure as suas chaves de API para utilizar o DevPulse. As chaves são armazenadas de forma segura e associadas à sua conta.',
+    description: 'Configure as suas chaves de API para utilizar o Grumble. As chaves são armazenadas de forma segura e associadas à sua conta.',
     geminiApiKey: '🔑 Chave da API Gemini',
     geminiHint: 'Obtenha em',
     geminiLinkText: 'Google AI Studio',
@@ -194,7 +194,7 @@ export const ptPT: LocaleStrings = {
   // Início de Sessão
   login: {
     welcome: 'Bem-vindo ao',
-    appName: 'DevPulse',
+    appName: 'Grumble',
     tagline: 'Transforme conteúdo em threads apelativas para o Twitter',
     feature1Title: 'Multi-fonte',
     feature1Desc: 'Agregue Twitter, RSS e blogues',

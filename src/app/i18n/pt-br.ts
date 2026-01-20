@@ -1,4 +1,4 @@
-// DevPulse Localization - Brazilian Portuguese (pt-BR)
+// Grumble Localization - Brazilian Portuguese (pt-BR)
 // Traduções naturais para português brasileiro
 
 import { LocaleStrings } from './en';
@@ -44,7 +44,7 @@ export const ptBR: LocaleStrings = {
   // Configurações
   settings: {
     title: '⚙️ Configurações',
-    description: 'Configure suas chaves de API para usar o DevPulse. As chaves são armazenadas de forma segura e vinculadas à sua conta.',
+    description: 'Configure suas chaves de API para usar o Grumble. As chaves são armazenadas de forma segura e vinculadas à sua conta.',
     geminiApiKey: '🔑 Chave da API Gemini',
     geminiHint: 'Obtenha em',
     geminiLinkText: 'Google AI Studio',
@@ -194,14 +194,14 @@ export const ptBR: LocaleStrings = {
   // Login
   login: {
     welcome: 'Bem-vindo ao',
-    appName: 'DevPulse',
-    tagline: 'Transforme conteúdo em threads engajadoras para o Twitter',
+    appName: 'Grumble',
+    tagline: 'Monitore e analise feedbacks de usuários sobre a Gemini API',
     feature1Title: 'Multi-fonte',
-    feature1Desc: 'Agregue Twitter, RSS e blogs',
+    feature1Desc: 'Agregue Twitter, GitHub e Fóruns',
     feature2Title: 'IA Avançada',
-    feature2Desc: 'Gere threads com Gemini 3',
-    feature3Title: 'Mídia Visual',
-    feature3Desc: 'Crie imagens e vídeos com IA',
+    feature2Desc: 'Análise de sentimento com Gemini 3',
+    feature3Title: 'Agrupamento Inteligente',
+    feature3Desc: 'Agrupe feedbacks similares automaticamente',
   },
 
   // Conteúdo Adhoc

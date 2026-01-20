@@ -1,4 +1,4 @@
-// DevPulse Localization - French (fr)
+// Grumble Localization - French (fr)
 // Traductions naturelles pour le français
 
 import { LocaleStrings } from './en';
@@ -44,7 +44,7 @@ export const fr: LocaleStrings = {
   // Paramètres
   settings: {
     title: '⚙️ Paramètres',
-    description: 'Configurez vos clés API pour utiliser DevPulse. Les clés sont stockées de manière sécurisée et liées à votre compte.',
+    description: 'Configurez vos clés API pour utiliser Grumble. Les clés sont stockées de manière sécurisée et liées à votre compte.',
     geminiApiKey: '🔑 Clé API Gemini',
     geminiHint: 'Obtenir sur',
     geminiLinkText: 'Google AI Studio',
@@ -194,7 +194,7 @@ export const fr: LocaleStrings = {
   // Connexion
   login: {
     welcome: 'Bienvenue sur',
-    appName: 'DevPulse',
+    appName: 'Grumble',
     tagline: 'Transformez votre contenu en threads Twitter viraux',
     feature1Title: 'Multi-sources',
     feature1Desc: 'Agrégez Twitter, RSS et blogs',

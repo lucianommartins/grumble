@@ -12,7 +12,7 @@ import { I18nService } from '../../i18n';
     <div class="login-container">
       <div class="login-card">
         <div class="login-header">
-          <img src="/logo.png" alt="DevPulse" class="login-logo" />
+          <img src="/logo.png" alt="Grumble" class="login-logo" />
           <h1 class="login-title">{{ i18n.t.login.appName }}</h1>
           <p class="login-subtitle">{{ i18n.t.login.tagline }}</p>
         </div>

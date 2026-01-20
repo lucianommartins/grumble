@@ -1,6 +1,6 @@
 # Guia de Deploy no Cloud Run
 
-Este guia fornece instruções passo a passo para fazer deploy do DevPulse no Google Cloud Run.
+Este guia fornece instruções passo a passo para fazer deploy do Grumble no Google Cloud Run.
 
 ---
 
@@ -51,7 +51,7 @@ graph TB
     subgraph CloudRun["Serviço Cloud Run"]
         subgraph Container["Container Node.js"]
             Express["Express Server<br/>(API Proxy)<br/>:8080"]
-            Angular["App Angular Estática<br/>(dist/devpulse/)"]
+            Angular["App Angular Estática<br/>(dist/grumble/)"]
             Express --> Angular
         end
     end
@@ -148,7 +148,7 @@ O `cloudbuild.yaml` define três passos:
 ### Opção A: Script Automatizado (Recomendado)
 
 ```bash
-# Do diretório raiz devpulse/
+# Do diretório raiz grumble/
 export GOOGLE_CLOUD_PROJECT="seu-project-id"
 ./deploy/cloudrun/deploy.sh
 ```
@@ -165,12 +165,12 @@ O script irá:
 
 ```bash
 # Navegue até a raiz do projeto
-cd /caminho/para/devpulse
+cd /caminho/para/grumble
 
 # Submeta o build com Cloud Build
 gcloud builds submit \
     --config=deploy/cloudrun/cloudbuild.yaml \
-    --substitutions=_SERVICE_NAME=devpulse,_REGION=us-central1 \
+    --substitutions=_SERVICE_NAME=grumble,_REGION=us-central1 \
     .
 ```
 
@@ -178,10 +178,10 @@ gcloud builds submit \
 
 ```bash
 # Verificar status do serviço
-gcloud run services describe devpulse --region=us-central1
+gcloud run services describe grumble --region=us-central1
 
 # Obter a URL do serviço
-gcloud run services describe devpulse \
+gcloud run services describe grumble \
     --region=us-central1 \
     --format='value(status.url)'
 ```
@@ -195,7 +195,7 @@ gcloud run services describe devpulse \
 ```bash
 # Criar mapeamento de domínio
 gcloud beta run domain-mappings create \
-    --service=devpulse \
+    --service=grumble \
     --domain=app.seudominio.com \
     --region=us-central1
 ```
@@ -247,7 +247,7 @@ Se você quer `seudominio.com` (sem subdomínio):
 - Verifique se você está autenticado: `gcloud auth list`
 
 **Erro: "Container failed to start"**
-- Verifique os logs: `gcloud run services logs read devpulse --region=us-central1`
+- Verifique os logs: `gcloud run services logs read grumble --region=us-central1`
 - Verifique se PORT está definido como 8080
 
 ### Problemas de Mapeamento de Domínio
@@ -270,10 +270,10 @@ Teste o build Docker localmente antes de fazer deploy:
 
 ```bash
 # Build local
-docker build -f deploy/cloudrun/Dockerfile -t devpulse-local .
+docker build -f deploy/cloudrun/Dockerfile -t grumble-local .
 
 # Executar localmente
-docker run -p 8080:8080 devpulse-local
+docker run -p 8080:8080 grumble-local
 
 # Testar
 curl http://localhost:8080/api/health
@@ -295,7 +295,7 @@ Ou dispare um novo build manualmente:
 ```bash
 gcloud builds submit \
     --config=deploy/cloudrun/cloudbuild.yaml \
-    --substitutions=_SERVICE_NAME=devpulse,_REGION=us-central1 \
+    --substitutions=_SERVICE_NAME=grumble,_REGION=us-central1 \
     .
 ```
 

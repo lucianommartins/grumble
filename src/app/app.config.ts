@@ -11,7 +11,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(),
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideAuth(() => getAuth()),
-    // Use the named database 'devpulse' instead of default
-    provideFirestore(() => getFirestore(getApp(), 'devpulse'))
+    // Use the named database 'grumble' instead of default
+    provideFirestore(() => getFirestore(getApp(), 'grumble'))
   ]
 };

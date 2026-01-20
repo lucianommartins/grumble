@@ -1,4 +1,4 @@
-# Cloud Build configuration for DevPulse
+# Cloud Build configuration for Grumble
 # This file is used by `gcloud builds submit`
 # Environment variables are passed as substitutions from deploy.sh
 
@@ -72,7 +72,7 @@ images:
 
 # Substitutions (passed from deploy.sh)
 substitutions:
-  _SERVICE_NAME: devpulse
+  _SERVICE_NAME: grumble
   _REGION: us-central1
   _TAG: latest
   # Firebase config - MUST be provided via deploy.sh

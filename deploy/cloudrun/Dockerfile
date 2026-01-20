@@ -54,7 +54,7 @@ RUN npm ci --only=production
 COPY server/index.js ./
 
 # Copy built Angular app from builder stage
-COPY --from=builder /app/dist/devpulse/browser /app/dist/devpulse/browser
+COPY --from=builder /app/dist/grumble/browser /app/dist/grumble/browser
 
 WORKDIR /app/server
 

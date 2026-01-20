@@ -18,7 +18,7 @@ app.use(express.json());
 
 // Serve Angular static files in production
 if (process.env.NODE_ENV === 'production') {
-  const angularDistPath = join(__dirname, '..', 'dist', 'devpulse', 'browser');
+  const angularDistPath = join(__dirname, '..', 'dist', 'grumble', 'browser');
   app.use(express.static(angularDistPath));
 }
 
@@ -372,20 +372,14 @@ app.all('/api/twitter/*', async (req, res) => {
 // SPA fallback - serve index.html for all non-API routes (must be after API routes)
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
-    const angularDistPath = join(__dirname, '..', 'dist', 'devpulse', 'browser');
+    const angularDistPath = join(__dirname, '..', 'dist', 'grumble', 'browser');
     res.sendFile(join(angularDistPath, 'index.html'));
   });
 }
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 DevPulse API Server running on http://localhost:${PORT}`);
+  console.log(`🔥 Grumble API Server running on http://localhost:${PORT}`);
   console.log(`📡 Twitter API proxy: http://localhost:${PORT}/api/twitter/*`);
   console.log(`🤖 Gemini API proxy: http://localhost:${PORT}/api/gemini/*`);
-  if (!TWITTER_BEARER_TOKEN) {
-    console.warn('⚠️  Warning: TWITTER_BEARER_TOKEN not set in .env');
-  }
-  if (!GEMINI_API_KEY) {
-    console.warn('⚠️  Warning: GEMINI_API_KEY not set in .env');
-  }
 });

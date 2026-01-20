@@ -1,4 +1,4 @@
-// DevPulse Localization - English (en)
+// Grumble Localization - English (en)
 // This file contains all UI strings for the application
 
 export const en = {
@@ -42,7 +42,7 @@ export const en = {
   // Settings
   settings: {
     title: '⚙️ Settings',
-    description: 'Configure your API keys to use DevPulse. Keys are stored securely and associated with your account.',
+    description: 'Configure your API keys to use Grumble. Keys are stored securely and associated with your account.',
     geminiApiKey: '🔑 Gemini API Key',
     geminiHint: 'Get it from',
     geminiLinkText: 'Google AI Studio',
@@ -192,14 +192,14 @@ export const en = {
   // Login
   login: {
     welcome: 'Welcome to',
-    appName: 'DevPulse',
-    tagline: 'Transform your content into engaging Twitter threads',
+    appName: 'Grumble',
+    tagline: 'Monitor and analyze user feedback about Gemini API',
     feature1Title: 'Multi-source',
-    feature1Desc: 'Aggregate from Twitter, RSS, and blogs',
+    feature1Desc: 'Aggregate from Twitter, GitHub, and Forums',
     feature2Title: 'AI Powered',
-    feature2Desc: 'Generate threads with Gemini 3',
-    feature3Title: 'Visual Media',
-    feature3Desc: 'Create images and videos with AI',
+    feature2Desc: 'Sentiment analysis with Gemini 3',
+    feature3Title: 'Smart Grouping',
+    feature3Desc: 'Group similar feedback automatically',
   },
 
   // Adhoc Content

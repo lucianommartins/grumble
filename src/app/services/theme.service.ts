@@ -7,7 +7,7 @@ export type Theme = 'dark' | 'light';
   providedIn: 'root'
 })
 export class ThemeService {
-  private readonly STORAGE_KEY_PREFIX = 'devpulse-theme';
+  private readonly STORAGE_KEY_PREFIX = 'grumble-theme';
   private authService = inject(AuthService);
 
   currentTheme = signal<Theme>('dark'); // Default

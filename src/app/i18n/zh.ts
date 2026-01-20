@@ -1,4 +1,4 @@
-// DevPulse Localization - Simplified Chinese (zh)
+// Grumble Localization - Simplified Chinese (zh)
 // 简体中文翻译
 
 import { LocaleStrings } from './en';
@@ -44,7 +44,7 @@ export const zh: LocaleStrings = {
   // 设置
   settings: {
     title: '⚙️ 设置',
-    description: '配置您的 API 密钥以使用 DevPulse。密钥将安全存储并与您的账户关联。',
+    description: '配置您的 API 密钥以使用 Grumble。密钥将安全存储并与您的账户关联。',
     geminiApiKey: '🔑 Gemini API 密钥',
     geminiHint: '在此获取',
     geminiLinkText: 'Google AI Studio',
@@ -194,7 +194,7 @@ export const zh: LocaleStrings = {
   // 登录
   login: {
     welcome: '欢迎使用',
-    appName: 'DevPulse',
+    appName: 'Grumble',
     tagline: '将内容转化为病毒式 Twitter 推文串',
     feature1Title: '多来源',
     feature1Desc: '聚合 Twitter、RSS 和博客',

@@ -1,4 +1,4 @@
-// DevPulse Localization - Latin American Spanish (es)
+// Grumble Localization - Latin American Spanish (es)
 // Traducciones naturales para español latinoamericano
 
 import { LocaleStrings } from './en';
@@ -44,7 +44,7 @@ export const es: LocaleStrings = {
   // Configuración
   settings: {
     title: '⚙️ Configuración',
-    description: 'Configura tus claves de API para usar DevPulse. Las claves se almacenan de forma segura y están vinculadas a tu cuenta.',
+    description: 'Configura tus claves de API para usar Grumble. Las claves se almacenan de forma segura y están vinculadas a tu cuenta.',
     geminiApiKey: '🔑 Clave de API Gemini',
     geminiHint: 'Obtener en',
     geminiLinkText: 'Google AI Studio',
@@ -194,7 +194,7 @@ export const es: LocaleStrings = {
   // Inicio de Sesión
   login: {
     welcome: 'Bienvenido a',
-    appName: 'DevPulse',
+    appName: 'Grumble',
     tagline: 'Transforma contenido en hilos atractivos para Twitter',
     feature1Title: 'Multi-fuente',
     feature1Desc: 'Agrega Twitter, RSS y blogs',

@@ -82,7 +82,7 @@ export class CryptoService {
     );
 
     // Use user ID as salt for additional uniqueness
-    const salt = encoder.encode(`devpulse-salt-${userId}`);
+    const salt = encoder.encode(`grumble-salt-${userId}`);
 
     return crypto.subtle.deriveKey(
       {

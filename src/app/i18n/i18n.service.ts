@@ -28,7 +28,7 @@ export const LOCALE_OPTIONS: LocaleOption[] = [
   { code: 'en', name: 'English', flag: '🇬🇧', languageCode: 'English' },
 ];
 
-const LOCALE_STORAGE_KEY = 'devpulse_locale';
+const LOCALE_STORAGE_KEY = 'grumble_locale';
 
 @Injectable({
   providedIn: 'root'

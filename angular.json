@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "devpulse": {
+    "grumble": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:class": {
@@ -42,6 +42,7 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
+            "outputPath": "dist/grumble",
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "assets": [
@@ -82,10 +83,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "devpulse:build:production"
+              "buildTarget": "grumble:build:production"
             },
             "development": {
-              "buildTarget": "devpulse:build:development"
+              "buildTarget": "grumble:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -1,125 +1,128 @@
 <aside class="sidebar">
-  <!-- Time Window Slider -->
+  <!-- Source Stats -->
   <section class="sidebar-section">
-    <h3 class="section-title">{{ i18n.t.sidebar.timeWindow }}</h3>
-    <div class="time-slider-container">
-      <input type="range" class="time-slider" [min]="1" [max]="168" [value]="timeWindow()"
-        (input)="onTimeWindowChange($event)" />
-      <span class="time-value">{{ getTimeWindowLabel() }}</span>
+    <h3 class="section-title">📊 Sources</h3>
+    <div class="source-stats">
+      <div class="stat-item" [class.active]="isSourceEnabled('twitter-search')" (click)="toggleSource('twitter-search')">
+        <span class="stat-icon">𝕏</span>
+        <span class="stat-label">Twitter</span>
+        <span class="stat-count">{{ stats().bySource.twitter }}</span>
+      </div>
+      <div class="stat-item" [class.active]="isSourceEnabled('github-issue')" (click)="toggleSource('github-issue')">
+        <span class="stat-icon">🐛</span>
+        <span class="stat-label">Issues</span>
+        <span class="stat-count">{{ stats().bySource.githubIssues }}</span>
+      </div>
+      <div class="stat-item" [class.active]="isSourceEnabled('github-discussion')"
+        (click)="toggleSource('github-discussion')">
+        <span class="stat-icon">💬</span>
+        <span class="stat-label">Discussions</span>
+        <span class="stat-count">{{ stats().bySource.githubDiscussions }}</span>
+      </div>
+      <div class="stat-item" [class.active]="isSourceEnabled('discourse')" (click)="toggleSource('discourse')">
+        <span class="stat-icon">🗣️</span>
+        <span class="stat-label">Forum</span>
+        <span class="stat-count">{{ stats().bySource.discourse }}</span>
+      </div>
     </div>
   </section>
 
-  <!-- Sources List -->
-  <section class="sidebar-section sources-section">
-    <!-- Type Filters -->
-    <div class="type-filters">
-      <button class="type-filter-btn" [class.active]="feedService.isTypeEnabled('twitter')"
-        (click)="feedService.toggleType('twitter')" title="Toggle Twitter/X">
-        𝕏
-      </button>
-      <button class="type-filter-btn" [class.active]="feedService.isTypeEnabled('rss')"
-        (click)="feedService.toggleType('rss')" title="Toggle RSS">
-        📡
-      </button>
-      <button class="type-filter-btn" [class.active]="feedService.isTypeEnabled('blog')"
-        (click)="feedService.toggleType('blog')" title="Toggle Blog">
-        📝
-      </button>
-      <button class="type-filter-btn" [class.active]="feedService.isTypeEnabled('youtube')"
-        (click)="feedService.toggleType('youtube')" title="Toggle YouTube">
-        ▶️
-      </button>
-    </div>
-
+  <!-- Keywords Section -->
+  <section class="sidebar-section">
     <div class="section-header">
-      <h3 class="section-title">{{ i18n.t.sidebar.sources }}</h3>
-      <button class="btn-add" (click)="openAddForm()" [title]="i18n.t.sidebar.addSource">
+      <h3 class="section-title">🔍 Keywords</h3>
+      <button class="btn-add" (click)="showAddKeyword.set(true)" title="Add keyword">
         <span>+</span>
       </button>
     </div>
 
-    <!-- Add/Edit Feed Form -->
-    @if (showAddForm()) {
+    @if (showAddKeyword()) {
     <div class="add-form animate-fadeIn">
-      <h4 class="form-title">{{ editingFeedId() ? i18n.t.sidebar.editSource : i18n.t.sidebar.newSource }}</h4>
-      <input type="text" class="input" [placeholder]="i18n.t.sidebar.feedNamePlaceholder" [value]="newFeedName()"
-        (input)="newFeedName.set($any($event.target).value)" />
-      <input type="text" class="input" [placeholder]="i18n.t.sidebar.feedUrlPlaceholder" [value]="newFeedUrl()"
-        (input)="updateUrl($any($event.target).value)" />
-      <div class="detected-type">
-        <span class="type-icon" [class]="getFeedIconClass(newFeedType())">{{ getFeedIcon(newFeedType()) }}</span>
-        <span class="type-label">{{ newFeedType() === 'twitter' ? i18n.t.sidebar.typeTwitter : newFeedType() === 'rss' ? i18n.t.sidebar.typeRss : newFeedType() === 'youtube' ? i18n.t.sidebar.typeYoutube : i18n.t.sidebar.typeBlog }}</span>
-        <span class="type-hint">{{ i18n.t.sidebar.autoDetected || 'Auto-detected' }}</span>
-      </div>
+      <input type="text" class="input" placeholder="e.g. gemini api error" [(ngModel)]="newKeyword" />
       <div class="form-actions">
-        <button class="btn btn-secondary" (click)="cancelAddForm()">{{ i18n.t.common.cancel }}</button>
-        <button class="btn btn-primary" (click)="saveFeed()">{{ editingFeedId() ? i18n.t.common.save : 'Add' }}</button>
+        <button class="btn btn-secondary" (click)="showAddKeyword.set(false)">Cancel</button>
+        <button class="btn btn-primary" (click)="addKeyword()">Add</button>
       </div>
     </div>
     }
 
-    <!-- Feed List -->
-    <div class="feeds-list">
-      <button class="btn-enable-all" (click)="feedService.enableAllFeeds()" [title]="i18n.t.sidebar.enableAll">
-        {{ i18n.t.sidebar.enableAll }}
-      </button>
-      @if (feeds().length === 0) {
-      <div class="empty-feeds">
-        <p>{{ i18n.t.sidebar.noSources }}</p>
-        <p class="hint">{{ i18n.t.sidebar.noSourcesHint }}</p>
-      </div>
-      }
-      @for (feed of feeds(); track feed.id) {
-      <div class="feed-item" [class.disabled]="!feed.enabled">
-        <span class="feed-icon" [class]="getFeedIconClass(feed.type)">
-          {{ getFeedIcon(feed.type) }}
-        </span>
-        <span class="feed-name solo-trigger" (click)="soloFeed(feed.id)" title="Show only this source">
-          {{ feed.name }}
-        </span>
-        <span class="feed-type-badge">{{ feed.type === 'twitter' ? 'X' : feed.type.toUpperCase() }}</span>
-        <button class="feed-toggle" [class.active]="feed.enabled" (click)="toggleFeed(feed.id)"
-          [title]="feed.enabled ? 'Disable' : 'Enable'">
+    <div class="items-list">
+      @for (keyword of twitterService.keywords(); track keyword.id) {
+      <div class="list-item" [class.disabled]="!keyword.enabled">
+        <span class="item-icon">🏷️</span>
+        <span class="item-name">{{ keyword.term }}</span>
+        <button class="item-toggle" [class.active]="keyword.enabled" (click)="twitterService.toggleKeyword(keyword.id)">
           <span class="toggle-dot"></span>
         </button>
-        <button class="btn-edit" (click)="editFeed(feed)" title="Edit source">
-          ✏️
+        <button class="btn-delete" (click)="twitterService.removeKeyword(keyword.id)">×</button>
+      </div>
+      }
+    </div>
+    </section>
+    
+    <!-- GitHub Repos Section -->
+    <section class="sidebar-section">
+      <div class="section-header">
+        <h3 class="section-title">🐙 GitHub Repos</h3>
+      </div>
+    
+      <div class="items-list">
+        @for (repo of githubService.repos(); track repo.id) {
+        <div class="list-item" [class.disabled]="!repo.enabled">
+          <span class="item-icon">📦</span>
+          <span class="item-name">{{ repo.repo }}</span>
+          <button class="item-toggle" [class.active]="repo.enabled" (click)="githubService.toggleRepo(repo.id)">
+          <span class="toggle-dot"></span>
         </button>
-        <button class="btn-delete" (click)="removeFeed(feed.id)" title="Remove source">
-          ×
-        </button>
+      </div>
+      }</div>
+      </section>
+      
+      <!-- Feedback Groups Section -->
+      @if (feedbackService.groups().length > 0) {
+      <section class="sidebar-section">
+        <div class="section-header">
+          <h3 class="section-title">📁 Feedback Groups</h3>
+          @if (selectedGroup()) {
+          <button class="btn-clear" (click)="clearGroupFilter()">Clear</button>
+          }
+        </div>
+      
+        <div class="groups-list">
+          @for (group of feedbackService.groups(); track group.id) {
+          <div class="group-item" [class.active]="selectedGroup() === group.id" (click)="filterByGroup(group.id)">
+            <div class="group-header">
+              <span class="group-sentiment">{{ getSentimentIcon(group.sentiment) }}</span>
+              <span class="group-theme">{{ group.theme }}</span>
+            </div>
+            <div class="group-meta">
+              <span class="group-count">{{ group.itemCount }} items</span>
+              <span class="group-category">{{ group.category }}</span>
+            </div>
       </div>
       }
     </div>
   </section>
+  }
 
   <!-- Sync Button -->
-  <button class="btn btn-primary btn-full sync-button" (click)="onSync()" [disabled]="isLoading()">
-    @if (isLoading()) {
+  <button class="btn btn-primary btn-full sync-button" (click)="onSync()" [disabled]="feedbackService.isLoading()">
+    @if (feedbackService.isLoading()) {
     <span class="spinner"></span>
-    <span>{{ i18n.t.sidebar.syncing }}</span>
+    <span>Syncing...</span>
     } @else {
     <span class="sync-icon">🔄</span>
-    <span>{{ i18n.t.sidebar.syncSources }}</span>
+    <span>Sync All Sources</span>
     }
   </button>
 
   <!-- How it Works -->
   <section class="how-it-works">
-    <h4 class="how-title">{{ i18n.t.sidebar.howItWorks }}</h4>
+    <h4 class="how-title">How it works</h4>
     <ul class="how-list">
-      <li>{{ i18n.t.sidebar.howStep1 }}</li>
-      <li>{{ i18n.t.sidebar.howStep2 }}</li>
-      <li>{{ i18n.t.sidebar.howStep3 }}</li>
+      <li>Configure keywords and repos above</li>
+      <li>Click Sync to fetch feedback</li>
+      <li>Use AI to analyze sentiment</li>
     </ul>
   </section>
-<!-- Global Stats Counter -->
-@if (stats.contentCreated() > 0) {
-<section class="stats-counter">
-  <div class="counter-badge">
-    <span class="counter-value">{{ stats.contentCreated() | number }}</span>
-    <span class="counter-label">{{ i18n.t.header.contentsGenerated || 'contents generated' }}</span>
-  </div>
-</section>
-}
 </aside>

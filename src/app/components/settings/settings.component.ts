@@ -38,6 +38,21 @@ import { I18nService, SupportedLocale } from '../../i18n';
           </div>
 
           <div class="form-group">
+            <label for="githubPat">🐙 GitHub Personal Access Token <span class="required">*{{ i18n.t.common.required }}</span></label>
+            <input
+              type="password"
+              id="githubPat"
+              [(ngModel)]="githubPat"
+              placeholder="ghp_..."
+              class="form-input"
+              [class.input-error]="!githubPat"
+            />
+            <p class="form-hint">
+              Get it from <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings</a>. Required for GitHub Issues/Discussions.
+            </p>
+          </div>
+
+          <div class="form-group">
             <label for="twitterToken">{{ i18n.t.settings.twitterBearerToken }} <span class="optional">({{ i18n.t.common.optional }})</span></label>
             <input 
               type="password" 
@@ -91,7 +106,7 @@ import { I18nService, SupportedLocale } from '../../i18n';
           <button 
             class="btn btn-primary" 
             (click)="save()"
-            [disabled]="settingsService.isLoading() || isValidating() || !geminiApiKey"
+            [disabled]="settingsService.isLoading() || isValidating() || !geminiApiKey || !githubPat"
           >
             {{ isValidating() ? i18n.t.common.validating : (settingsService.isLoading() ? i18n.t.common.saving : i18n.t.common.save) }}
           </button>
@@ -328,6 +343,7 @@ export class SettingsComponent {
 
   geminiApiKey = '';
   twitterBearerToken = '';
+  githubPat = '';
   saveSuccess = signal(false);
   validationError = signal<string | null>(null);
   isValidating = signal(false);
@@ -343,6 +359,7 @@ export class SettingsComponent {
     if (settings) {
       this.geminiApiKey = settings.geminiApiKey || '';
       this.twitterBearerToken = settings.twitterBearerToken || '';
+      this.githubPat = settings.githubPat || '';
     }
   }
 
@@ -357,12 +374,14 @@ export class SettingsComponent {
     // Check if anything changed
     const currentGeminiKey = this.settingsService.getGeminiApiKey() || '';
     const currentTwitterToken = this.settingsService.getTwitterBearerToken() || '';
+    const currentGithubPat = this.settingsService.getGithubPat() || '';
 
     const geminiChanged = this.geminiApiKey !== currentGeminiKey;
     const twitterChanged = this.twitterBearerToken !== currentTwitterToken;
+    const githubChanged = this.githubPat !== currentGithubPat;
 
     // If nothing changed, just close
-    if (!geminiChanged && !twitterChanged) {
+    if (!geminiChanged && !twitterChanged && !githubChanged) {
       this.close.emit();
       return;
     }
@@ -415,18 +434,15 @@ export class SettingsComponent {
     try {
       await this.settingsService.saveSettings({
         geminiApiKey: this.geminiApiKey,
-        twitterBearerToken: this.twitterBearerToken
+        twitterBearerToken: this.twitterBearerToken,
+        githubPat: this.githubPat
       });
       this.saveSuccess.set(true);
 
       // Auto-close after 1.5 seconds
       setTimeout(() => this.close.emit(), 1500);
-    } catch (error) {
-      // Error is handled by service
+    } catch (error: any) {
+      this.validationError.set(error.message || 'Error saving settings');
     }
   }
 }
-
-
-
-
