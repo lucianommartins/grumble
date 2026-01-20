@@ -547,9 +547,11 @@ Respond in JSON format:
 }
 
 Guidelines:
-- "positive": Praise, thanks, excitement
-- "neutral": Questions, discussions
-- "negative": Complaints, frustration, bugs
+- "positive": Praise, thanks, excitement, success stories
+- "neutral": Pure questions without errors, general discussions, clarifications
+- "negative": Complaints, frustration, bugs, API errors, unexpected behavior, things not working
+- IMPORTANT: If a question includes an API error message, error code, or "not working" behavior, classify as "negative" + "bug-report"
+- Look at the CONTENT, not just the title format. Error messages = negative sentiment.
 - Categorize by PRIMARY intent`;
   }
 

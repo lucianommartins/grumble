@@ -275,23 +275,40 @@ export class FeedbackService {
         const groupStartIndex = g;
         this.logger.info('Feedback', `[Group ${Math.floor(g / parallelBatches) + 1}] Starting ${parallelGroup.length} batches in parallel...`);
 
-        // Wrap each batch to update progress as it completes
+        // Track progress with atomic counter
+        let groupProcessed = 0;
+
+        // Each promise updates progress immediately when it completes
         const wrappedPromises = parallelGroup.map(async (batch, batchIndex) => {
           const batchNum = groupStartIndex + batchIndex + 1;
           this.logger.debug('Feedback', `[Batch ${batchNum}] Sending ${batch.length} items to Gemini...`);
 
+          let results: Map<string, any>;
+          let success = true;
+
           try {
-            const results = await this.sentiment.analyzeBatchDirect(batch);
+            results = await this.sentiment.analyzeBatchDirect(batch);
             this.logger.debug('Feedback', `[Batch ${batchNum}] Received ${results.size} results`);
-            return { success: true, results, batch };
           } catch (error) {
             this.logger.error('Feedback', `[Batch ${batchNum}] Failed:`, error);
-            return { success: false, results: new Map(), batch, error };
+            results = new Map();
+            success = false;
           }
+
+          // Update progress IMMEDIATELY when this batch completes
+          groupProcessed++;
+          processedCount += batch.length;
+          this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
+          this.logger.debug('Feedback', `Progress: ${processedCount}/${items.length} items analyzed`);
+
+          return { success, results, batch };
         });
 
-        // Process as they complete (not waiting for all)
-        for await (const result of wrappedPromises) {
+        // Wait for all parallel batches to complete
+        const allResults = await Promise.all(wrappedPromises);
+
+        // Process results (update items, save to Firestore)
+        for (const result of allResults) {
           if (result.success) {
             const updatedBatchItems: FeedbackItem[] = [];
 
@@ -319,13 +336,6 @@ export class FeedbackService {
               analyzedInThisSession.push(...updatedBatchItems);
             }
           }
-
-          // Update progress after EACH batch completes
-          processedCount += result.batch.length;
-          this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
-          this.logger.debug('Feedback', `Progress: ${processedCount}/${items.length} items analyzed`);
-          // Force UI update
-          await new Promise(resolve => setTimeout(resolve, 0));
         }
 
         this.logger.info('Feedback', `[Group ${Math.floor(g / parallelBatches) + 1}] Complete. Total: ${processedCount}/${items.length}`);
