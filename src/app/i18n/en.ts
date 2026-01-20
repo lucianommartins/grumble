@@ -215,6 +215,38 @@ export const en = {
     errorNoInput: 'Please provide a URL or image.',
     errorGeneration: 'Failed to generate content. Please try again.',
   },
+
+  // Grumble-specific
+  grumble: {
+    total: 'Total',
+    positive: 'Positive',
+    neutral: 'Neutral',
+    negative: 'Negative',
+    all: 'All',
+    analyzing: 'Analyzing...',
+    analyze: 'Analyze',
+    noFeedbackYet: 'No feedback yet',
+    clickSyncToFetch: 'Click Sync to fetch feedback from all sources',
+    feedbackResults: 'Feedback Results',
+    items: 'items',
+    openOriginal: 'Open original',
+    dismiss: 'Dismiss',
+    syncAllSources: 'Sync All Sources',
+    syncing: 'Syncing...',
+    feedbackGroups: 'Feedback Groups',
+    clear: 'Clear',
+    howItWorks: 'How it works',
+    howStep1: 'Configure keywords and repos above',
+    howStep2: 'Click Sync to fetch feedback',
+    howStep3: 'Use AI to analyze sentiment',
+    keywords: 'Keywords',
+    githubRepos: 'GitHub Repos',
+    sources: 'Sources',
+    twitter: 'Twitter',
+    issues: 'Issues',
+    discussions: 'Discussions',
+    forum: 'Forum',
+  },
 };
 
 export type LocaleStrings = typeof en;

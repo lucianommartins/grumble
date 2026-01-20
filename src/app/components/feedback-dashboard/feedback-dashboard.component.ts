@@ -43,11 +43,12 @@ export class FeedbackDashboardComponent {
   // Source type filter state
   sourceFilters = computed(() => {
     const enabled = this.feedbackService.enabledSourceTypes();
+    const t = this.i18n.t.grumble;
     return [
-      { type: 'twitter-search' as FeedbackSourceType, label: '𝕏 Twitter', enabled: enabled.has('twitter-search') },
-      { type: 'github-issue' as FeedbackSourceType, label: '🐙 Issues', enabled: enabled.has('github-issue') },
-      { type: 'github-discussion' as FeedbackSourceType, label: '💬 Discussions', enabled: enabled.has('github-discussion') },
-      { type: 'discourse' as FeedbackSourceType, label: '🗣️ Forum', enabled: enabled.has('discourse') },
+      { type: 'twitter-search' as FeedbackSourceType, label: `𝕏 ${t.twitter}`, enabled: enabled.has('twitter-search') },
+      { type: 'github-issue' as FeedbackSourceType, label: `🐙 ${t.issues}`, enabled: enabled.has('github-issue') },
+      { type: 'github-discussion' as FeedbackSourceType, label: `💬 ${t.discussions}`, enabled: enabled.has('github-discussion') },
+      { type: 'discourse' as FeedbackSourceType, label: `🗣️ ${t.forum}`, enabled: enabled.has('discourse') },
     ];
   });
 

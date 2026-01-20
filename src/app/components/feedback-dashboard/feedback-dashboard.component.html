@@ -4,19 +4,19 @@
     <div class="stats-bar">
       <div class="stat">
         <span class="stat-value">{{ stats().total }}</span>
-        <span class="stat-label">Total</span>
+        <span class="stat-label">{{ i18n.t.grumble.total }}</span>
       </div>
       <div class="stat positive">
         <span class="stat-value">{{ stats().positive }}</span>
-        <span class="stat-label">😊 Positive</span>
+        <span class="stat-label">😊 {{ i18n.t.grumble.positive }}</span>
       </div>
       <div class="stat neutral">
         <span class="stat-value">{{ stats().neutral }}</span>
-        <span class="stat-label">😐 Neutral</span>
+        <span class="stat-label">😐 {{ i18n.t.grumble.neutral }}</span>
       </div>
       <div class="stat negative">
         <span class="stat-value">{{ stats().negative }}</span>
-        <span class="stat-label">😤 Negative</span>
+        <span class="stat-label">😤 {{ i18n.t.grumble.negative }}</span>
       </div>
     </div>
 
@@ -33,7 +33,7 @@
       <!-- Sentiment filter -->
       <div class="sentiment-filters">
         <button class="sentiment-btn" [class.active]="selectedSentiment() === null" (click)="setSentimentFilter(null)">
-          All
+          {{ i18n.t.grumble.all }}
         </button>
         <button class="sentiment-btn positive" [class.active]="selectedSentiment() === 'positive'"
           (click)="setSentimentFilter('positive')">
@@ -53,7 +53,7 @@
       <div class="actions">
         @if (selectedCount() > 0) {
         <button class="action-btn analyze" (click)="analyzeSelected()" [disabled]="isAnalyzing()">
-          {{ isAnalyzing() ? '⏳ Analyzing...' : '🧠 Analyze (' + selectedCount() + ')' }}
+          {{ isAnalyzing() ? '⏳ ' + i18n.t.grumble.analyzing : '🧠 ' + i18n.t.grumble.analyze + ' (' + selectedCount() + ')' }}
         </button>
         }
       </div>
@@ -73,16 +73,16 @@
   @if (!isLoading() && items().length === 0) {
   <div class="empty-state">
     <div class="empty-icon">🔍</div>
-    <h3>No feedback yet</h3>
-    <p>Click Sync to fetch feedback from all sources</p>
+    <h3>{{ i18n.t.grumble.noFeedbackYet }}</h3>
+    <p>{{ i18n.t.grumble.clickSyncToFetch }}</p>
   </div>
   }
 
   <!-- Feedback list -->
   @if (!isLoading() && items().length > 0) {
   <div class="results-header">
-    <h2 class="results-title">📋 Feedback Results</h2>
-    <span class="results-count">{{ items().length }} items</span>
+    <h2 class="results-title">📋 {{ i18n.t.grumble.feedbackResults }}</h2>
+    <span class="results-count">{{ items().length }} {{ i18n.t.grumble.items }}</span>
   </div>
   <div class="feedback-list" [class.cards]="viewMode() === 'cards'">
     @for (item of items(); track item.id) {

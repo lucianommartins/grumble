@@ -1,27 +1,27 @@
 <aside class="sidebar">
   <!-- Source Stats -->
   <section class="sidebar-section">
-    <h3 class="section-title">📊 Sources</h3>
+    <h3 class="section-title">📊 {{ i18n.t.grumble.sources }}</h3>
     <div class="source-stats">
       <div class="stat-item" [class.active]="isSourceEnabled('twitter-search')" (click)="toggleSource('twitter-search')">
         <span class="stat-icon">𝕏</span>
-        <span class="stat-label">Twitter</span>
+        <span class="stat-label">{{ i18n.t.grumble.twitter }}</span>
         <span class="stat-count">{{ stats().bySource.twitter }}</span>
       </div>
       <div class="stat-item" [class.active]="isSourceEnabled('github-issue')" (click)="toggleSource('github-issue')">
         <span class="stat-icon">🐛</span>
-        <span class="stat-label">Issues</span>
+        <span class="stat-label">{{ i18n.t.grumble.issues }}</span>
         <span class="stat-count">{{ stats().bySource.githubIssues }}</span>
       </div>
       <div class="stat-item" [class.active]="isSourceEnabled('github-discussion')"
         (click)="toggleSource('github-discussion')">
         <span class="stat-icon">💬</span>
-        <span class="stat-label">Discussions</span>
+        <span class="stat-label">{{ i18n.t.grumble.discussions }}</span>
         <span class="stat-count">{{ stats().bySource.githubDiscussions }}</span>
       </div>
       <div class="stat-item" [class.active]="isSourceEnabled('discourse')" (click)="toggleSource('discourse')">
         <span class="stat-icon">🗣️</span>
-        <span class="stat-label">Forum</span>
+        <span class="stat-label">{{ i18n.t.grumble.forum }}</span>
         <span class="stat-count">{{ stats().bySource.discourse }}</span>
       </div>
     </div>
@@ -30,7 +30,7 @@
   <!-- Keywords Section -->
   <section class="sidebar-section">
     <div class="section-header">
-      <h3 class="section-title">🔍 Keywords</h3>
+      <h3 class="section-title">🔍 {{ i18n.t.grumble.keywords }}</h3>
       <button class="btn-add" (click)="showAddKeyword.set(true)" title="Add keyword">
         <span>+</span>
       </button>
@@ -63,7 +63,7 @@
     <!-- GitHub Repos Section -->
     <section class="sidebar-section">
       <div class="section-header">
-        <h3 class="section-title">🐙 GitHub Repos</h3>
+        <h3 class="section-title">🐙 {{ i18n.t.grumble.githubRepos }}</h3>
       </div>
     
       <div class="items-list">
@@ -82,9 +82,9 @@
       @if (feedbackService.groups().length > 0) {
       <section class="sidebar-section">
         <div class="section-header">
-          <h3 class="section-title">📁 Feedback Groups</h3>
+          <h3 class="section-title">📁 {{ i18n.t.grumble.feedbackGroups }}</h3>
           @if (selectedGroup()) {
-          <button class="btn-clear" (click)="clearGroupFilter()">Clear</button>
+          <button class="btn-clear" (click)="clearGroupFilter()">{{ i18n.t.grumble.clear }}</button>
           }
         </div>
       
@@ -96,7 +96,7 @@
               <span class="group-theme">{{ group.theme }}</span>
             </div>
             <div class="group-meta">
-              <span class="group-count">{{ group.itemCount }} items</span>
+              <span class="group-count">{{ group.itemCount }} {{ i18n.t.grumble.items }}</span>
               <span class="group-category">{{ group.category }}</span>
             </div>
       </div>
@@ -109,20 +109,20 @@
   <button class="btn btn-primary btn-full sync-button" (click)="onSync()" [disabled]="feedbackService.isLoading()">
     @if (feedbackService.isLoading()) {
     <span class="spinner"></span>
-    <span>Syncing...</span>
+    <span>{{ i18n.t.grumble.syncing }}</span>
     } @else {
     <span class="sync-icon">🔄</span>
-    <span>Sync All Sources</span>
+    <span>{{ i18n.t.grumble.syncAllSources }}</span>
     }
   </button>
 
   <!-- How it Works -->
   <section class="how-it-works">
-    <h4 class="how-title">How it works</h4>
+    <h4 class="how-title">{{ i18n.t.grumble.howItWorks }}</h4>
     <ul class="how-list">
-      <li>Configure keywords and repos above</li>
-      <li>Click Sync to fetch feedback</li>
-      <li>Use AI to analyze sentiment</li>
+      <li>{{ i18n.t.grumble.howStep1 }}</li>
+      <li>{{ i18n.t.grumble.howStep2 }}</li>
+      <li>{{ i18n.t.grumble.howStep3 }}</li>
     </ul>
   </section>
 </aside>

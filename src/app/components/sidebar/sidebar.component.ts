@@ -6,6 +6,7 @@ import { TwitterSearchService } from '../../services/twitter-search.service';
 import { GitHubService } from '../../services/github.service';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { FeedbackSourceType, Sentiment } from '../../models/feedback.model';
+import { I18nService } from '../../i18n';
 
 @Component({
   selector: 'app-sidebar',
@@ -19,6 +20,7 @@ export class SidebarComponent {
   twitterService = inject(TwitterSearchService);
   githubService = inject(GitHubService);
   userSettings = inject(UserSettingsService);
+  i18n = inject(I18nService);
 
   @Output() openSettings = new EventEmitter<void>();
 
