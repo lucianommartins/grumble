@@ -1,4 +1,4 @@
-import { Component, inject, signal, Output, EventEmitter } from '@angular/core';
+import { Component, inject, signal, Output, EventEmitter, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeedbackService } from '../../services/feedback.service';
@@ -29,6 +29,24 @@ export class SidebarComponent {
   showAddKeyword = signal(false);
   newKeyword = '';
   selectedGroup = signal<string | null>(null);
+  selectedGroupSentiment = signal<Sentiment | null>(null);
+
+  // Groups filtered by sentiment and sorted by item count (descending)
+  filteredSortedGroups = computed(() => {
+    const sentiment = this.selectedGroupSentiment();
+    let groups = [...this.feedbackService.groups()];
+
+    if (sentiment) {
+      groups = groups.filter(g => g.sentiment === sentiment);
+    }
+
+    return groups.sort((a, b) => b.itemCount - a.itemCount);
+  });
+
+  // Legacy computed for backward compatibility
+  sortedGroups = computed(() =>
+    [...this.feedbackService.groups()].sort((a, b) => b.itemCount - a.itemCount)
+  );
 
   get stats() {
     return this.feedbackService.stats;

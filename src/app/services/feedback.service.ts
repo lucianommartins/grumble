@@ -7,6 +7,7 @@ import { SentimentService } from './sentiment.service';
 import { SharedFeedbackService } from './shared-feedback.service';
 import { CacheService } from './cache.service';
 import { LoggerService } from './logger.service';
+import { I18nService } from '../i18n';
 
 /**
  * FeedbackService orchestrates fetching from all sources
@@ -23,6 +24,7 @@ export class FeedbackService {
   private sharedFeedback = inject(SharedFeedbackService);
   private cache = inject(CacheService);
   private logger = inject(LoggerService);
+  private i18n = inject(I18nService);
 
   // State
   items = signal<FeedbackItem[]>([]);
@@ -280,6 +282,38 @@ export class FeedbackService {
 
       this.logger.info('Feedback', `Analysis complete. ${processedCount} items processed.`);
 
+      // Translate items in non-user language to user's Grumble language
+      const userLang = this.i18n.getLocale();
+      const itemsNeedingTranslation = this.items().filter(i =>
+        i.language && i.language !== userLang && !i.translatedContent
+      );
+
+      if (itemsNeedingTranslation.length > 0) {
+        this.logger.info('Feedback', `Translating ${itemsNeedingTranslation.length} items to ${userLang}...`);
+        const translations = await this.sentiment.translateItems(itemsNeedingTranslation, userLang);
+
+        if (translations.size > 0) {
+          this.items.update(allItems =>
+            allItems.map(item => {
+              const translation = translations.get(item.id);
+              if (translation) {
+                return {
+                  ...item,
+                  translatedContent: translation.translatedContent,
+                  translatedTitle: translation.translatedTitle,
+                };
+              }
+              return item;
+            })
+          );
+
+          // Save translated items to Firebase
+          const translatedItems = this.items().filter(i => i.translatedContent);
+          await this.sharedFeedback.saveItems(translatedItems);
+          this.logger.info('Feedback', `Saved ${translations.size} translated items`);
+        }
+      }
+
       // Create groups from analyzed items (after all batches)
       const analyzedItems = this.items().filter(i => i.analyzed);
       if (analyzedItems.length >= 10) {
@@ -297,7 +331,11 @@ export class FeedbackService {
           allGroups.push(...batchGroups);
         }
 
-        for (const group of allGroups) {
+        // Consolidate similar groups from different batches
+        this.logger.info('Feedback', `Consolidating ${allGroups.length} groups...`);
+        const consolidatedGroups = await this.sentiment.consolidateSimilarGroups(allGroups);
+
+        for (const group of consolidatedGroups) {
           const groupIdSet = new Set(group.itemIds);
           this.items.update(allItems =>
             allItems.map(item =>
@@ -308,14 +346,14 @@ export class FeedbackService {
         }
 
         // Save groups to Firebase
-        if (allGroups.length > 0) {
-          await this.sharedFeedback.saveGroups(allGroups);
+        if (consolidatedGroups.length > 0) {
+          await this.sharedFeedback.saveGroups(consolidatedGroups);
           // Also update items with groupId in Firebase
           const itemsWithGroups = this.items().filter(i => i.groupId);
           await this.sharedFeedback.saveItems(itemsWithGroups);
         }
 
-        this.logger.info('Feedback', `Created ${allGroups.length} feedback groups.`);
+        this.logger.info('Feedback', `Created ${consolidatedGroups.length} consolidated feedback groups.`);
       }
     } catch (error) {
       this.logger.error('Feedback', 'Analysis failed:', error);

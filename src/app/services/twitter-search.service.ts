@@ -80,13 +80,13 @@ export class TwitterSearchService {
   }
 
   /**
-   * Search tweets using Twitter API v2 Recent Search
+   * Search tweets using Twitter API v2 Recent Search (single language)
    * Requires Basic tier ($100/mo) or higher
    */
   async searchTweets(
     query: string,
-    languages: string[] | 'all' = 'all',
-    maxResults: number = 100
+    language: string = 'en',
+    maxResults: number = 50
   ): Promise<FeedbackItem[]> {
     const bearerToken = this.userSettings.getTwitterBearerToken();
 
@@ -95,18 +95,9 @@ export class TwitterSearchService {
       return [];
     }
 
-    // Build query with language filter
-    let searchQuery = query;
-    if (languages !== 'all' && languages.length > 0) {
-      const langFilter = languages
-        .map(l => TWITTER_LANG_MAP[l] || l)
-        .map(l => `lang:${l}`)
-        .join(' OR ');
-      searchQuery = `(${query}) (${langFilter})`;
-    }
-
-    // Exclude retweets for cleaner results
-    searchQuery += ' -is:retweet';
+    // Build query with single language filter
+    const twitterLang = TWITTER_LANG_MAP[language] || language;
+    let searchQuery = `(${query}) lang:${twitterLang} -is:retweet`;
 
     const params = new URLSearchParams({
       query: searchQuery,
@@ -138,17 +129,18 @@ export class TwitterSearchService {
       const tweets = data.data || [];
       const users = new Map((data.includes?.users || []).map(u => [u.id, u]));
 
-      this.logger.debug('TwitterSearch', `Found ${tweets.length} tweets for query: ${query}`);
+      this.logger.debug('TwitterSearch', `Found ${tweets.length} tweets for "${query}" (${language})`);
 
       return tweets.map(tweet => this.mapTweetToFeedback(tweet, users, query));
     } catch (error) {
-      this.logger.error('TwitterSearch', `Failed to search for "${query}":`, error);
+      this.logger.error('TwitterSearch', `Failed to search "${query}" (${language}):`, error);
       return [];
     }
   }
 
   /**
-   * Search all configured keywords
+   * Search all configured keywords across all languages
+   * Searches each language separately for better coverage
    */
   async searchAllKeywords(): Promise<FeedbackItem[]> {
     const enabledKeywords = this.keywords().filter(k => k.enabled);
@@ -156,21 +148,28 @@ export class TwitterSearchService {
     const seenIds = new Set<string>();
 
     for (const keyword of enabledKeywords) {
-      const tweets = await this.searchTweets(keyword.term, keyword.languages);
+      const languages = keyword.languages === 'all'
+        ? Object.keys(TWITTER_LANG_MAP)
+        : keyword.languages;
 
-      // Deduplicate across keywords
-      for (const tweet of tweets) {
-        if (!seenIds.has(tweet.sourceId)) {
-          seenIds.add(tweet.sourceId);
-          allItems.push(tweet);
+      // Search each language separately
+      for (const lang of languages) {
+        const tweets = await this.searchTweets(keyword.term, lang, 50);
+
+        // Deduplicate across keywords and languages
+        for (const tweet of tweets) {
+          if (!seenIds.has(tweet.sourceId)) {
+            seenIds.add(tweet.sourceId);
+            allItems.push(tweet);
+          }
         }
-      }
 
-      // Small delay between searches to respect rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
+        // Small delay between searches to respect rate limits
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
     }
 
-    this.logger.info('TwitterSearch', `Total unique tweets: ${allItems.length}`);
+    this.logger.info('TwitterSearch', `Total unique tweets across all languages: ${allItems.length}`);
     return allItems;
   }
 

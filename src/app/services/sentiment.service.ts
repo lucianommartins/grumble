@@ -146,6 +146,94 @@ export class SentimentService {
   }
 
   /**
+   * Translate feedback items to target language
+   * Only translates items where language differs from target
+   */
+  async translateItems(
+    items: FeedbackItem[],
+    targetLang: string
+  ): Promise<Map<string, { translatedContent: string; translatedTitle?: string }>> {
+    const results = new Map<string, { translatedContent: string; translatedTitle?: string }>();
+
+    // Filter items that need translation
+    const needsTranslation = items.filter(item =>
+      item.language && item.language !== targetLang && !item.translatedContent
+    );
+
+    if (needsTranslation.length === 0) {
+      return results;
+    }
+
+    const apiKey = this.userSettings.getGeminiApiKey();
+    if (!apiKey) {
+      return results;
+    }
+
+    // Process in smaller batches for translation
+    const batchSize = 10;
+    for (let i = 0; i < needsTranslation.length; i += batchSize) {
+      const batch = needsTranslation.slice(i, i + batchSize);
+      const prompt = this.buildTranslationPrompt(batch, targetLang);
+
+      try {
+        const response = await this.callGemini(apiKey, prompt);
+        const data = JSON.parse(response);
+
+        for (const translation of data.translations || []) {
+          results.set(translation.itemId, {
+            translatedContent: translation.content,
+            translatedTitle: translation.title || undefined,
+          });
+        }
+      } catch (error) {
+        this.logger.error('Sentiment', 'Translation batch failed:', error);
+      }
+    }
+
+    this.logger.info('Sentiment', `Translated ${results.size} items to ${targetLang}`);
+    return results;
+  }
+
+  private buildTranslationPrompt(items: FeedbackItem[], targetLang: string): string {
+    const langNames: Record<string, string> = {
+      'en': 'English',
+      'pt-br': 'Brazilian Portuguese',
+      'pt-pt': 'Portuguese',
+      'es': 'Spanish',
+      'fr': 'French',
+      'de': 'German',
+      'ja': 'Japanese',
+      'zh': 'Chinese',
+    };
+
+    const targetName = langNames[targetLang] || targetLang;
+
+    const itemsText = items.map(item => `
+[ITEM] ID: ${item.id}
+LANG: ${item.language}
+${item.title ? `TITLE: ${item.title}` : ''}
+CONTENT: ${item.content.substring(0, 500)}
+---`).join('\n');
+
+    return `Translate these feedback items to ${targetName}.
+
+${itemsText}
+
+Respond in JSON:
+{
+  "translations": [
+    {
+      "itemId": "the item ID",
+      "title": "translated title if exists",
+      "content": "translated content"
+    }
+  ]
+}
+
+Keep translations natural and conversational. Preserve technical terms.`;
+  }
+
+  /**
    * Group similar feedback items
    */
   async groupSimilarItems(items: FeedbackItem[]): Promise<FeedbackGroup[]> {
@@ -166,6 +254,109 @@ export class SentimentService {
     } catch (error) {
       this.logger.error('Sentiment', 'Failed to group items:', error);
       return [];
+    }
+  }
+
+  /**
+   * Consolidate similar groups from different batches
+   * Merges groups with similar themes into single groups
+   */
+  async consolidateSimilarGroups(groups: FeedbackGroup[]): Promise<FeedbackGroup[]> {
+    if (groups.length < 2) {
+      return groups;
+    }
+
+    const apiKey = this.userSettings.getGeminiApiKey();
+    if (!apiKey) {
+      return groups;
+    }
+
+    const prompt = this.buildConsolidationPrompt(groups);
+
+    try {
+      const response = await this.callGemini(apiKey, prompt);
+      return this.parseConsolidationResponse(response, groups);
+    } catch (error) {
+      this.logger.error('Sentiment', 'Failed to consolidate groups:', error);
+      return groups;
+    }
+  }
+
+  private buildConsolidationPrompt(groups: FeedbackGroup[]): string {
+    const groupsText = groups.map((group, i) => `
+[${i + 1}] ID: ${group.id}
+THEME: ${group.theme}
+SUMMARY: ${group.summary}
+SENTIMENT: ${group.sentiment}
+CATEGORY: ${group.category}
+ITEM_COUNT: ${group.itemCount}
+ITEM_IDS: ${group.itemIds.join(', ')}
+---`).join('\n');
+
+    return `These ${groups.length} feedback groups may contain duplicates (same topic with different names).
+Consolidate groups that are about the SAME issue into single merged groups.
+
+${groupsText}
+
+Respond in JSON:
+{
+  "mergedGroups": [
+    {
+      "theme": "Unified theme name for merged groups",
+      "summary": "Combined summary of all merged groups",
+      "sentiment": "positive" | "neutral" | "negative",
+      "category": "bug-report" | "feature-request" | "performance-issue" | "documentation-gap" | "integration-problem" | "breaking-change" | "pricing-quota" | "praise" | "question" | "other",
+      "originalGroupIds": ["id1", "id2"],
+      "allItemIds": ["item1", "item2", "item3"]
+    }
+  ]
+}
+
+Rules:
+- Only merge groups that are CLEARLY about the same topic
+- Groups that are unique should still appear (originalGroupIds will have 1 entry)
+- Combine all itemIds from merged groups into allItemIds
+- Pick the most descriptive theme name`;
+  }
+
+  private parseConsolidationResponse(response: string, originalGroups: FeedbackGroup[]): FeedbackGroup[] {
+    try {
+      const data = JSON.parse(response);
+      const mergedGroups: FeedbackGroup[] = [];
+
+      for (const merged of data.mergedGroups || []) {
+        // Find source types and languages from original groups
+        const sourceGroupIds = new Set(merged.originalGroupIds || []);
+        const sourceGroups = originalGroups.filter(g => sourceGroupIds.has(g.id));
+
+        const allSources: FeedbackGroup['sources'] = [];
+        const allLanguages: string[] = [];
+
+        for (const sg of sourceGroups) {
+          allSources.push(...(sg.sources || []));
+          allLanguages.push(...(sg.languages || []));
+        }
+
+        mergedGroups.push({
+          id: `merged-${Date.now()}-${mergedGroups.length}`,
+          theme: merged.theme,
+          summary: merged.summary,
+          sentiment: merged.sentiment,
+          category: merged.category,
+          itemIds: merged.allItemIds || [],
+          itemCount: (merged.allItemIds || []).length,
+          sources: allSources,
+          languages: [...new Set(allLanguages)],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+
+      this.logger.info('Sentiment', `Consolidated ${originalGroups.length} groups into ${mergedGroups.length}`);
+      return mergedGroups;
+    } catch (error) {
+      this.logger.error('Sentiment', 'Failed to parse consolidation response:', error);
+      return originalGroups;
     }
   }
 

@@ -83,13 +83,25 @@
       <section class="sidebar-section">
         <div class="section-header">
           <h3 class="section-title">📁 {{ i18n.t.grumble.feedbackGroups }}</h3>
-          @if (selectedGroup()) {
-          <button class="btn-clear" (click)="clearGroupFilter()">{{ i18n.t.grumble.clear }}</button>
+          @if (selectedGroup() || selectedGroupSentiment()) {
+          <button class="btn-clear" (click)="clearGroupFilter(); selectedGroupSentiment.set(null)">{{ i18n.t.grumble.clear
+            }}</button>
           }
         </div>
+<!-- Sentiment Filter for Groups -->
+<div class="sentiment-filter">
+  <button class="sentiment-btn" [class.active]="!selectedGroupSentiment()"
+    (click)="selectedGroupSentiment.set(null)">Todos</button>
+  <button class="sentiment-btn positive" [class.active]="selectedGroupSentiment() === 'positive'"
+    (click)="selectedGroupSentiment.set('positive')">😊</button>
+  <button class="sentiment-btn neutral" [class.active]="selectedGroupSentiment() === 'neutral'"
+    (click)="selectedGroupSentiment.set('neutral')">😐</button>
+  <button class="sentiment-btn negative" [class.active]="selectedGroupSentiment() === 'negative'"
+    (click)="selectedGroupSentiment.set('negative')">😠</button>
+</div>
       
         <div class="groups-list">
-          @for (group of feedbackService.groups(); track group.id) {
+          @for (group of filteredSortedGroups(); track group.id) {
           <div class="group-item" [class.active]="selectedGroup() === group.id" (click)="filterByGroup(group.id)">
             <div class="group-header">
               <span class="group-sentiment">{{ getSentimentIcon(group.sentiment) }}</span>
