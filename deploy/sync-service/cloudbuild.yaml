@@ -1,0 +1,30 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/grumble-sync:$COMMIT_SHA', '.']
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/grumble-sync:$COMMIT_SHA']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'grumble-sync'
+      - '--image=gcr.io/$PROJECT_ID/grumble-sync:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated=false'
+      - '--max-instances=1'
+      - '--memory=512Mi'
+      - '--timeout=540s'
+      - '--set-secrets=TWITTER_BEARER_TOKEN=twitter-token:latest,GITHUB_TOKEN=github-token:latest,GEMINI_API_KEY=gemini-key:latest'
+
+images:
+  - 'gcr.io/$PROJECT_ID/grumble-sync:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

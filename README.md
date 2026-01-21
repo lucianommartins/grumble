@@ -84,8 +84,45 @@ grumble/
 │   │   └── settings/               # API key configuration
 │   └── models/
 │       └── feedback.model.ts       # Data models
-└── server/
-    └── index.js                    # Express server with API proxies
+├── server/
+│   └── index.js                    # Express server with API proxies
+└── deploy/
+    ├── webapp/                     # Angular app deployment
+    └── sync-service/               # Python sync service
+```
+
+## 🔄 Sync Service (Backend)
+
+O Grumble possui um serviço backend opcional que sincroniza as sources automaticamente via Cloud Scheduler.
+
+### Componentes
+
+| Componente | Descrição |
+|------------|-----------|
+| **Webapp** | Angular app no Cloud Run (`deploy/webapp/`) |
+| **Sync Service** | Python backend no Cloud Run (`deploy/sync-service/`) |
+| **Scheduler** | Cloud Scheduler invoca sync a cada 30min |
+
+### Deploy do Sync Service
+
+```bash
+cd deploy/sync-service
+gcloud run deploy grumble-sync \
+  --source . \
+  --region us-central1 \
+  --max-instances=1 \
+  --set-secrets=TWITTER_BEARER_TOKEN=twitter-token:latest,GITHUB_TOKEN=github-token:latest,GEMINI_API_KEY=gemini-key:latest
+```
+
+### Cloud Scheduler Setup
+
+```bash
+gcloud scheduler jobs create http grumble-sync-job \
+  --location=us-central1 \
+  --schedule="*/30 * * * *" \
+  --uri="https://YOUR-SERVICE-URL/sync" \
+  --http-method=POST \
+  --oidc-service-account-email=YOUR-SA@PROJECT.iam.gserviceaccount.com
 ```
 
 ## 🔐 Security
