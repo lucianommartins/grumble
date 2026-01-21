@@ -71,6 +71,13 @@ async def sync_all(request: Request):
     try:
         config = firestore.get_config()
         
+        # Get last sync time for incremental queries
+        last_sync = firestore.get_last_sync_time()
+        if last_sync:
+            logger.info(f"[Sync] Using incremental sync since {last_sync.isoformat()}")
+        else:
+            logger.info("[Sync] First sync - fetching all available data")
+        
         # ========== PHASE 1: SYNC ==========
         logger.info("[Sync] Starting source sync...")
         all_items = []
@@ -82,7 +89,7 @@ async def sync_all(request: Request):
             if twitter_token:
                 twitter = TwitterService(twitter_token)
                 keywords = config.get("twitter", {}).get("keywords", [])
-                items = await twitter.search(keywords)
+                items = await twitter.search(keywords, since=last_sync)
                 all_items.extend(items)
                 logger.info(f"[Sync] Twitter: {len(items)} items")
         
@@ -95,7 +102,7 @@ async def sync_all(request: Request):
                 repos = config.get("github", {}).get("repos", [])
                 github_items = []
                 for repo in repos:
-                    items = await github.fetch_issues_and_discussions(repo)
+                    items = await github.fetch_issues_and_discussions(repo, since=last_sync)
                     github_items.extend(items)
                 all_items.extend(github_items)
                 logger.info(f"[Sync] GitHub: {len(github_items)} items")

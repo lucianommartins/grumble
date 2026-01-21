@@ -15,6 +15,18 @@ class FirestoreService:
         self.feedback_collection = "grumble-feedback"
         self.groups_collection = "grumble-groups"
     
+    def get_last_sync_time(self) -> datetime | None:
+        """Get the timestamp of the last successful sync."""
+        ref = self.db.collection(self.config_collection).document("sync-state")
+        doc = ref.get()
+        if doc.exists:
+            data = doc.to_dict()
+            last_sync = data.get("lastSyncAt")
+            if last_sync:
+                # Firestore returns datetime directly
+                return last_sync if isinstance(last_sync, datetime) else None
+        return None
+    
     def get_config(self) -> Dict[str, Any]:
         """Get sync configuration from Firestore."""
         config = {}

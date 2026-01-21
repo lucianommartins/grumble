@@ -1,5 +1,5 @@
 import httpx
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import logging
 import asyncio
@@ -16,8 +16,13 @@ class GitHubService:
         self.graphql_url = "https://api.github.com/graphql"
         self.max_retries = 3
     
-    async def fetch_issues_and_discussions(self, repo: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Fetch both issues and discussions for a repo."""
+    async def fetch_issues_and_discussions(self, repo: Dict[str, Any], since: Optional[datetime] = None) -> List[Dict[str, Any]]:
+        """Fetch both issues and discussions for a repo.
+        
+        Args:
+            repo: Repo config dict
+            since: Only fetch items updated after this datetime
+        """
         if not repo.get("enabled", True):
             return []
         
@@ -30,7 +35,7 @@ class GitHubService:
         
         # Fetch issues
         try:
-            issues = await self._fetch_issues(owner, name)
+            issues = await self._fetch_issues(owner, name, since)
             items.extend(issues)
         except Exception as e:
             logger.error(f"[GitHub] Error fetching issues for {repo_name}: {e}")
@@ -44,7 +49,7 @@ class GitHubService:
         
         return items
     
-    async def _fetch_issues(self, owner: str, name: str) -> List[Dict[str, Any]]:
+    async def _fetch_issues(self, owner: str, name: str, since: Optional[datetime] = None) -> List[Dict[str, Any]]:
         """Fetch issues via REST API."""
         url = f"{self.base_url}/repos/{owner}/{name}/issues"
         headers = {
@@ -56,6 +61,11 @@ class GitHubService:
             "per_page": 100,
             "sort": "updated"
         }
+        
+        # Add since for incremental sync
+        if since:
+            params["since"] = since.strftime("%Y-%m-%dT%H:%M:%SZ")
+            logger.info(f"[GitHub] Fetching issues since {params['since']}")
         
         for attempt in range(self.max_retries):
             try:

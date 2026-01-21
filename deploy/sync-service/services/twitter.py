@@ -1,5 +1,5 @@
 import httpx
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import logging
 import asyncio
@@ -15,8 +15,13 @@ class TwitterService:
         self.base_url = "https://api.twitter.com/2"
         self.max_retries = 3
     
-    async def search(self, keywords: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Search tweets for given keywords."""
+    async def search(self, keywords: List[Dict[str, Any]], since: Optional[datetime] = None) -> List[Dict[str, Any]]:
+        """Search tweets for given keywords.
+        
+        Args:
+            keywords: List of keyword configs
+            since: Only fetch tweets created after this datetime
+        """
         all_items = []
         
         enabled_keywords = [k for k in keywords if k.get("enabled", True)]
@@ -27,14 +32,14 @@ class TwitterService:
                 continue
             
             try:
-                items = await self._search_term(term)
+                items = await self._search_term(term, since)
                 all_items.extend(items)
             except Exception as e:
                 logger.error(f"[Twitter] Error searching '{term}': {e}")
         
         return all_items
     
-    async def _search_term(self, term: str) -> List[Dict[str, Any]]:
+    async def _search_term(self, term: str, since: Optional[datetime] = None) -> List[Dict[str, Any]]:
         """Search for a single term with retry logic."""
         query = f"{term} -is:retweet lang:en"
         url = f"{self.base_url}/tweets/search/recent"
@@ -46,6 +51,11 @@ class TwitterService:
             "expansions": "author_id",
             "user.fields": "username,name"
         }
+        
+        # Add start_time for incremental sync
+        if since:
+            params["start_time"] = since.strftime("%Y-%m-%dT%H:%M:%SZ")
+            logger.info(f"[Twitter] Fetching tweets since {params['start_time']}")
         
         headers = {
             "Authorization": f"Bearer {self.bearer_token}"

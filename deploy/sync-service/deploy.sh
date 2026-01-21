@@ -45,7 +45,7 @@ gcloud run deploy $SERVICE_NAME \
     --region $REGION \
     --project $PROJECT_ID \
     --platform managed \
-    --allow-unauthenticated=false \
+    --no-allow-unauthenticated \
     --max-instances=1 \
     --memory=512Mi \
     --timeout=540s \
