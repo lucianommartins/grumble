@@ -169,23 +169,32 @@ export class CacheService {
   }
 
   /**
-   * Retry an async operation with exponential backoff
+   * Retry an async operation with exponential backoff and timeout
    */
   private async retryWithBackoff<T>(
     operation: () => Promise<T>,
     maxRetries: number = 3,
-    baseDelayMs: number = 1000
+    baseDelayMs: number = 1000,
+    timeoutMs: number = 30000
   ): Promise<T> {
     let lastError: Error | null = null;
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        return await operation();
+        // Wrap operation with timeout
+        const result = await Promise.race([
+          operation(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT: Firestore operation timed out')), timeoutMs)
+          )
+        ]);
+        return result;
       } catch (error: any) {
         lastError = error;
         const isRetryable = error?.code === 'unavailable' ||
           error?.code === 'resource-exhausted' ||
           error?.message?.includes('BloomFilter') ||
-          error?.message?.includes('INTERNAL');
+          error?.message?.includes('INTERNAL') ||
+          error?.message?.includes('TIMEOUT');
 
         if (!isRetryable || attempt === maxRetries - 1) {
           throw error;

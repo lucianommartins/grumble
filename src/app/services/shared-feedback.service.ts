@@ -30,6 +30,46 @@ export class SharedFeedbackService {
   private readonly SYNC_STATE_DOC = 'config/sync_state';
 
   /**
+   * Retry an async operation with exponential backoff and timeout
+   */
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelayMs: number = 1000,
+    timeoutMs: number = 30000
+  ): Promise<T> {
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Wrap operation with timeout
+        const result = await Promise.race([
+          operation(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('TIMEOUT: Firestore operation timed out')), timeoutMs)
+          )
+        ]);
+        return result;
+      } catch (error: any) {
+        lastError = error;
+        const isRetryable = error?.code === 'unavailable' ||
+          error?.code === 'resource-exhausted' ||
+          error?.message?.includes('BloomFilter') ||
+          error?.message?.includes('INTERNAL') ||
+          error?.message?.includes('TIMEOUT');
+
+        if (!isRetryable || attempt === maxRetries - 1) {
+          throw error;
+        }
+
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        this.logger.warn('SharedFeedback', `Firestore error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries}):`, error?.message);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw lastError;
+  }
+
+  /**
    * Save analyzed items to Firestore (shared collection)
    */
   async saveItems(items: FeedbackItem[]): Promise<void> {
@@ -44,10 +84,10 @@ export class SharedFeedbackService {
     }
 
     try {
-      await batch.commit();
+      await this.retryWithBackoff(() => batch.commit(), 3);
       this.logger.info('SharedFeedback', `Saved ${items.length} items to Firestore`);
     } catch (error) {
-      this.logger.error('SharedFeedback', 'Failed to save items:', error);
+      this.logger.error('SharedFeedback', 'Failed to save items after retries:', error);
       throw error;
     }
   }
@@ -99,7 +139,7 @@ export class SharedFeedbackService {
     }
 
     try {
-      await batch.commit();
+      await this.retryWithBackoff(() => batch.commit(), 3);
       this.logger.info('SharedFeedback', `Saved ${groups.length} groups to Firestore`);
     } catch (error) {
       this.logger.error('SharedFeedback', 'Failed to save groups:', error);
@@ -133,7 +173,7 @@ export class SharedFeedbackService {
       const snapshot = await getDocs(groupsRef);
       const batch = writeBatch(this.firestore);
       snapshot.docs.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
+      await this.retryWithBackoff(() => batch.commit(), 3);
       this.logger.info('SharedFeedback', 'Cleared all groups');
     } catch (error) {
       this.logger.error('SharedFeedback', 'Failed to clear groups:', error);
@@ -160,7 +200,7 @@ export class SharedFeedbackService {
           batch.delete(docRef);
         }
 
-        await batch.commit();
+        await this.retryWithBackoff(() => batch.commit(), 3);
       }
 
       this.logger.info('SharedFeedback', `Deleted ${itemIds.length} items from cache`);
@@ -186,7 +226,7 @@ export class SharedFeedbackService {
         const chunk = itemDocs.slice(i, i + chunkSize);
         const batch = writeBatch(this.firestore);
         chunk.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
+        await this.retryWithBackoff(() => batch.commit(), 3);
       }
 
       this.logger.info('SharedFeedback', `Cleared ${itemDocs.length} items from cache`);
