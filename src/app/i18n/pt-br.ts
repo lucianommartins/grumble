@@ -127,5 +127,9 @@ export const ptBR: LocaleStrings = {
       ja: 'Japonês',
       zh: 'Chinês',
     },
+    sortByDate: 'Data',
+    sortByLikes: 'Likes',
+    sortByComments: 'Comentários',
+    lastUpdate: 'Última atualização',
   },
 };

@@ -20,6 +20,13 @@
       </div>
     </div>
 
+    <!-- Last update timestamp -->
+    @if (lastSyncAt()) {
+    <div class="last-update">
+      🕒 {{ i18n.t.grumble.lastUpdate }}: {{ formatLastSync() }}
+    </div>
+    }
+
     <div class="controls">
       <!-- Source type filters -->
       <div class="source-filters">
@@ -30,23 +37,32 @@
         }
       </div>
 
-      <!-- Sentiment filter -->
+      <!-- Sentiment filter (multi-select) -->
       <div class="sentiment-filters">
-        <button class="sentiment-btn" [class.active]="selectedSentiment() === null" (click)="setSentimentFilter(null)">
-          {{ i18n.t.grumble.all }}
+        @for (s of sentimentFilters(); track s.sentiment) {
+        <button class="sentiment-btn" [class.active]="s.enabled" (click)="toggleSentiment(s.sentiment)">
+          {{ s.emoji }}
         </button>
-        <button class="sentiment-btn positive" [class.active]="selectedSentiment() === 'positive'"
-          (click)="setSentimentFilter('positive')">
-          😊
+        }
+        </div>
+        
+        <!-- Category filter (multi-select) -->
+        <div class="category-filters">
+          @for (cat of categoryFilters(); track cat.category) {
+          <button class="category-btn" [class.active]="cat.enabled" (click)="toggleCategory(cat.category)" [title]="cat.label">
+            {{ cat.icon }}
         </button>
-        <button class="sentiment-btn neutral" [class.active]="selectedSentiment() === 'neutral'"
-          (click)="setSentimentFilter('neutral')">
-          😐
-        </button>
-        <button class="sentiment-btn negative" [class.active]="selectedSentiment() === 'negative'"
-          (click)="setSentimentFilter('negative')">
-          😤
-        </button>
+        }
+        </div>
+        
+        <!-- Sorting -->
+        <div class="sort-controls">
+          <span class="sort-label">📊</span>
+          <select class="sort-select" [value]="sortBy()" (change)="setSortBy($any($event.target).value)">
+            <option value="date">{{ i18n.t.grumble.sortByDate || 'Data' }}</option>
+            <option value="likes">{{ i18n.t.grumble.sortByLikes || 'Likes' }}</option>
+            <option value="comments">{{ i18n.t.grumble.sortByComments || 'Comentários' }}</option>
+          </select>
       </div>
 
       <!-- Actions -->

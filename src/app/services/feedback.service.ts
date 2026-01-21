@@ -36,11 +36,12 @@ export class FeedbackService {
   // Filter state
   enabledSourceTypes = signal<Set<FeedbackSourceType>>(new Set(['twitter-search', 'github-issue', 'github-discussion', 'discourse']));
   showAnalyzedOnly = signal(false);
-  selectedSentiment = signal<Sentiment | null>(null);
-  selectedCategory = signal<FeedbackCategory | null>(null);
+  enabledSentiments = signal<Set<Sentiment>>(new Set(['positive', 'neutral', 'negative']));
+  enabledCategories = signal<Set<FeedbackCategory>>(new Set(['bug-report', 'feature-request', 'question', 'performance-issue', 'documentation-gap', 'integration-problem', 'breaking-change', 'pricing-quota', 'praise', 'other']));
   selectedGroupId = signal<string | null>(null);
   hideReplies = signal(false);
   hideDismissed = signal(true);
+  sortBy = signal<'date' | 'likes' | 'comments'>('date');
 
   // Computed filtered items
   filteredItems = computed(() => {
@@ -56,16 +57,16 @@ export class FeedbackService {
     const enabledTypes = this.enabledSourceTypes();
     result = result.filter(item => enabledTypes.has(item.sourceType));
 
-    // Filter by sentiment
-    const sentiment = this.selectedSentiment();
-    if (sentiment) {
-      result = result.filter(item => item.sentiment === sentiment);
+    // Filter by sentiment (multi-select)
+    const enabledSentiments = this.enabledSentiments();
+    if (enabledSentiments.size < 3) {
+      result = result.filter(item => item.sentiment && enabledSentiments.has(item.sentiment));
     }
 
-    // Filter by category
-    const category = this.selectedCategory();
-    if (category) {
-      result = result.filter(item => item.category === category);
+    // Filter by category (multi-select)
+    const enabledCategories = this.enabledCategories();
+    if (enabledCategories.size < 10) {
+      result = result.filter(item => item.category && enabledCategories.has(item.category));
     }
 
     // Filter out replies if requested
@@ -83,8 +84,17 @@ export class FeedbackService {
       result = result.filter(item => item.analyzed);
     }
 
-    // Sort by date (most recent first)
-    return result.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+    // Sort based on selected option
+    const sort = this.sortBy();
+    switch (sort) {
+      case 'likes':
+        return result.sort((a, b) => (b.reactionCount || 0) - (a.reactionCount || 0));
+      case 'comments':
+        return result.sort((a, b) => (b.replyCount || 0) - (a.replyCount || 0));
+      case 'date':
+      default:
+        return result.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
+    }
   });
 
   // Selection state
@@ -643,6 +653,36 @@ export class FeedbackService {
         newTypes.add(type);
       }
       return newTypes;
+    });
+  }
+
+  /**
+   * Toggle sentiment filter
+   */
+  toggleSentiment(sentiment: Sentiment): void {
+    this.enabledSentiments.update(current => {
+      const updated = new Set(current);
+      if (updated.has(sentiment)) {
+        updated.delete(sentiment);
+      } else {
+        updated.add(sentiment);
+      }
+      return updated;
+    });
+  }
+
+  /**
+   * Toggle category filter
+   */
+  toggleCategory(category: FeedbackCategory): void {
+    this.enabledCategories.update(current => {
+      const updated = new Set(current);
+      if (updated.has(category)) {
+        updated.delete(category);
+      } else {
+        updated.add(category);
+      }
+      return updated;
     });
   }
 

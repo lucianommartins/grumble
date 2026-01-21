@@ -127,5 +127,9 @@ export const es: LocaleStrings = {
       ja: 'Japonés',
       zh: 'Chino',
     },
+    sortByDate: 'Date',
+    sortByLikes: 'Likes',
+    sortByComments: 'Comments',
+    lastUpdate: 'Last update',
   },
 };

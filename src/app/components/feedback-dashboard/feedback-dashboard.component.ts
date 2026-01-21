@@ -53,6 +53,19 @@ export class FeedbackDashboardComponent {
     return this.feedbackService.selectedCount;
   }
 
+  get lastSyncAt() {
+    return this.feedbackService.lastSyncAt;
+  }
+
+  formatLastSync(): string {
+    const date = this.lastSyncAt();
+    if (!date) return '';
+    return date.toLocaleString(this.i18n.getLocale(), {
+      dateStyle: 'short',
+      timeStyle: 'short'
+    });
+  }
+
   // Source type filter state
   sourceFilters = computed(() => {
     const enabled = this.feedbackService.enabledSourceTypes();
@@ -65,8 +78,28 @@ export class FeedbackDashboardComponent {
     ];
   });
 
-  // Sentiment filter
-  selectedSentiment = this.feedbackService.selectedSentiment;
+  // Category filter state
+  categoryFilters = computed(() => {
+    const categories: FeedbackCategory[] = ['bug-report', 'feature-request', 'question', 'performance-issue', 'documentation-gap', 'praise', 'other'];
+    const enabled = this.feedbackService.enabledCategories();
+    return categories.map(cat => ({
+      category: cat,
+      enabled: enabled.has(cat),
+      ...CATEGORY_LABELS[cat]
+    }));
+  });
+
+  // Sentiment filter state (multi-select)
+  sentimentFilters = computed(() => {
+    const enabled = this.feedbackService.enabledSentiments();
+    return [
+      { sentiment: 'positive' as Sentiment, emoji: '😊', enabled: enabled.has('positive') },
+      { sentiment: 'neutral' as Sentiment, emoji: '😐', enabled: enabled.has('neutral') },
+      { sentiment: 'negative' as Sentiment, emoji: '😤', enabled: enabled.has('negative') },
+    ];
+  });
+
+  sortBy = this.feedbackService.sortBy;
 
   toggleItem(item: FeedbackItem): void {
     this.feedbackService.toggleSelection(item.id);
@@ -88,8 +121,16 @@ export class FeedbackDashboardComponent {
     this.feedbackService.toggleSourceType(type);
   }
 
-  setSentimentFilter(sentiment: Sentiment | null): void {
-    this.feedbackService.selectedSentiment.set(sentiment);
+  toggleSentiment(sentiment: Sentiment): void {
+    this.feedbackService.toggleSentiment(sentiment);
+  }
+
+  toggleCategory(category: FeedbackCategory): void {
+    this.feedbackService.toggleCategory(category);
+  }
+
+  setSortBy(sort: 'date' | 'likes' | 'comments'): void {
+    this.feedbackService.sortBy.set(sort);
   }
 
   dismissItem(item: FeedbackItem, event: Event): void {

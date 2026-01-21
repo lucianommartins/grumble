@@ -125,6 +125,10 @@ export const en = {
       ja: 'Japanese',
       zh: 'Chinese',
     },
+    sortByDate: 'Date',
+    sortByLikes: 'Likes',
+    sortByComments: 'Comments',
+    lastUpdate: 'Last update',
   },
 };
 
