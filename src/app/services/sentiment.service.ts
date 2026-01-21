@@ -121,24 +121,41 @@ export class SentimentService {
     const results = new Map<string, AnalysisResult>();
     const prompt = this.buildBatchAnalysisPrompt(items);
 
-    try {
-      const response = await this.callGemini(apiKey, prompt);
-      const batchResults = this.parseBatchResponse(response, items);
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-      for (const result of batchResults) {
-        results.set(result.itemId, result.analysis);
-      }
-    } catch (error) {
-      this.logger.error('Sentiment', 'Batch analysis failed:', error);
-      // Add neutral defaults for failed batch
-      for (const item of items) {
-        results.set(item.id, {
-          sentiment: 'neutral',
-          sentimentConfidence: 0,
-          category: 'other',
-          categoryConfidence: 0,
-          summary: item.content.substring(0, 100),
-        });
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await this.callGemini(apiKey, prompt);
+        const batchResults = this.parseBatchResponse(response, items);
+
+        for (const result of batchResults) {
+          results.set(result.itemId, result.analysis);
+        }
+        return results;
+      } catch (error: any) {
+        lastError = error;
+        const errorMsg = error?.message || String(error);
+        const isRetryable = errorMsg.includes('503') || errorMsg.includes('429') || errorMsg.includes('500');
+
+        if (isRetryable && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[Sentiment] Retry ${attempt}/${maxRetries} in ${delay}ms: ${errorMsg.substring(0, 60)}...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          console.error(`[Sentiment] Batch FAILED after ${attempt} attempts: ${errorMsg}`);
+          // Add neutral defaults for failed batch
+          for (const item of items) {
+            results.set(item.id, {
+              sentiment: 'neutral',
+              sentimentConfidence: 0,
+              category: 'other',
+              categoryConfidence: 0,
+              summary: item.content.substring(0, 100),
+            });
+          }
+          return results;
+        }
       }
     }
 

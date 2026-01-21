@@ -80,6 +80,39 @@ export class TwitterSearchService {
   }
 
   /**
+   * Fetch with retry and exponential backoff
+   */
+  private async fetchWithRetry(url: string, options: RequestInit, context: string): Promise<Response> {
+    const maxRetries = 3;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`HTTP ${response.status} - ${JSON.stringify(errorData)}`);
+        }
+        return response;
+      } catch (error: any) {
+        lastError = error;
+        const errorMsg = error?.message || String(error);
+        const isRetryable = errorMsg.includes('503') || errorMsg.includes('429') ||
+          errorMsg.includes('500') || errorMsg.includes('fetch');
+
+        if (isRetryable && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[Twitter] ${context}: Retry ${attempt}/${maxRetries} in ${delay}ms (${errorMsg.substring(0, 60)}...)`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  /**
    * Search tweets using Twitter API v2 Recent Search (single language)
    * Requires Basic tier ($100/mo) or higher
    * @param since - Optional date to fetch only tweets newer than this
@@ -93,7 +126,7 @@ export class TwitterSearchService {
     const bearerToken = this.userSettings.getTwitterBearerToken();
 
     if (!bearerToken) {
-      this.logger.warn('TwitterSearch', 'Bearer token not configured');
+      console.warn(`[Twitter] Bearer token not configured`);
       return [];
     }
 
@@ -112,36 +145,30 @@ export class TwitterSearchService {
     // Add start_time for incremental sync
     if (since) {
       params.set('start_time', since.toISOString());
-      this.logger.debug('TwitterSearch', `Fetching tweets since ${since.toISOString()}`);
     }
 
     try {
-      const response = await fetch(`/api/twitter/tweets/search/recent?${params}`, {
-        headers: {
-          'X-Twitter-Bearer-Token': bearerToken,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Twitter Search API error: ${response.status} - ${JSON.stringify(errorData)}`);
-      }
+      const response = await this.fetchWithRetry(
+        `/api/twitter/tweets/search/recent?${params}`,
+        { headers: { 'X-Twitter-Bearer-Token': bearerToken } },
+        `"${query}" (${language})`
+      );
 
       const data: TwitterSearchResponse = await response.json();
 
       if (data.errors) {
-        this.logger.error('TwitterSearch', 'API errors:', data.errors);
+        console.error(`[Twitter] "${query}" API errors:`, data.errors[0]?.message);
         return [];
       }
 
       const tweets = data.data || [];
       const users = new Map((data.includes?.users || []).map(u => [u.id, u]));
 
-      this.logger.debug('TwitterSearch', `Found ${tweets.length} tweets for "${query}" (${language})`);
+      console.log(`[Twitter] "${query}" (${language}): ${tweets.length} tweets`);
 
       return tweets.map(tweet => this.mapTweetToFeedback(tweet, users, query));
-    } catch (error) {
-      this.logger.error('TwitterSearch', `Failed to search "${query}" (${language}):`, error);
+    } catch (error: any) {
+      console.error(`[Twitter] "${query}" (${language}) FAILED: ${error?.message || error}`);
       return [];
     }
   }

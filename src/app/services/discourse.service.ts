@@ -73,17 +73,47 @@ export class DiscourseService {
   }
 
   /**
+   * Fetch with retry and exponential backoff
+   */
+  private async fetchWithRetry(url: string, context: string): Promise<Response> {
+    const maxRetries = 3;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response;
+      } catch (error: any) {
+        lastError = error;
+        const errorMsg = error?.message || String(error);
+        const isRetryable = errorMsg.includes('503') || errorMsg.includes('429') ||
+          errorMsg.includes('500') || errorMsg.includes('fetch');
+
+        if (isRetryable && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[Discourse] ${context}: Retry ${attempt}/${maxRetries} in ${delay}ms (${errorMsg})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  /**
    * Fetch latest topics from a Discourse forum
    * @param since - Optional date to fetch only topics newer than this
    */
   async fetchLatestTopics(baseUrl: string, limit: number = 30, since?: Date): Promise<FeedbackItem[]> {
     const url = `${CORS_PROXY}${encodeURIComponent(`${baseUrl}/latest.json?per_page=${limit}`)}`;
+    const forumName = new URL(baseUrl).hostname;
 
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Discourse API error: ${response.status}`);
-      }
+      const response = await this.fetchWithRetry(url, `${forumName} topics`);
 
       const data: DiscourseLatestResponse = await response.json();
       const topics = data.topic_list?.topics || [];
@@ -97,11 +127,11 @@ export class DiscourseService {
         ? topics.filter(t => new Date(t.created_at) > since)
         : topics;
 
-      this.logger.debug('Discourse', `Fetched ${filtered.length} topics from ${baseUrl}${since ? ' (incremental)' : ''}`);
+      console.log(`[Discourse] ${forumName}: ${filtered.length} topics`);
 
       return filtered.map(topic => this.mapTopicToFeedback(topic, baseUrl, userMap));
-    } catch (error) {
-      this.logger.error('Discourse', `Failed to fetch topics from ${baseUrl}:`, error);
+    } catch (error: any) {
+      console.error(`[Discourse] ${forumName} topics FAILED: ${error?.message || error}`);
       return [];
     }
   }
@@ -113,20 +143,15 @@ export class DiscourseService {
     const url = `${CORS_PROXY}${encodeURIComponent(`${baseUrl}/t/${topicSlug}/${topicId}.json`)}`;
 
     try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Discourse topic fetch error: ${response.status}`);
-      }
+      const response = await this.fetchWithRetry(url, `topic ${topicId}`);
 
       const data: DiscourseTopicResponse = await response.json();
       const posts = data.post_stream?.posts || [];
       const topicTitle = data.title;
 
-      this.logger.debug('Discourse', `Fetched ${posts.length} posts from topic ${topicId}`);
-
       return posts.map(post => this.mapPostToFeedback(post, baseUrl, topicId, topicTitle));
-    } catch (error) {
-      this.logger.error('Discourse', `Failed to fetch posts from topic ${topicId}:`, error);
+    } catch (error: any) {
+      console.error(`[Discourse] topic ${topicId} FAILED: ${error?.message || error}`);
       return [];
     }
   }

@@ -69,6 +69,38 @@ export class GitHubService {
   }
 
   /**
+   * Fetch with retry and exponential backoff
+   */
+  private async fetchWithRetry(url: string, options: RequestInit, context: string): Promise<Response> {
+    const maxRetries = 3;
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response;
+      } catch (error: any) {
+        lastError = error;
+        const errorMsg = error?.message || String(error);
+        const isRetryable = errorMsg.includes('503') || errorMsg.includes('429') ||
+          errorMsg.includes('500') || errorMsg.includes('fetch');
+
+        if (isRetryable && attempt < maxRetries) {
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          console.warn(`[GitHub] ${context}: Retry ${attempt}/${maxRetries} in ${delay}ms (${errorMsg})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  /**
    * Fetch issues from a GitHub repository
    */
   async fetchIssues(owner: string, repo: string, since?: Date): Promise<FeedbackItem[]> {
@@ -94,21 +126,17 @@ export class GitHubService {
     const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues?${params}`;
 
     try {
-      const response = await fetch(url, { headers });
-      if (!response.ok) {
-        throw new Error(`GitHub API error: ${response.status}`);
-      }
-
+      const response = await this.fetchWithRetry(url, { headers }, `${owner}/${repo} issues`);
       const issues: GitHubIssue[] = await response.json();
 
       // Filter out pull requests (they also appear in /issues endpoint)
       const actualIssues = issues.filter(issue => !('pull_request' in issue));
 
-      this.logger.debug('GitHub', `Fetched ${actualIssues.length} issues from ${owner}/${repo}`);
+      console.log(`[GitHub] ${owner}/${repo}: ${actualIssues.length} issues`);
 
       return actualIssues.map(issue => this.mapIssueToFeedback(issue, owner, repo));
-    } catch (error) {
-      this.logger.error('GitHub', `Failed to fetch issues from ${owner}/${repo}:`, error);
+    } catch (error: any) {
+      console.error(`[GitHub] ${owner}/${repo} issues FAILED: ${error?.message || error}`);
       return [];
     }
   }
@@ -121,7 +149,7 @@ export class GitHubService {
     const pat = this.userSettings.getGithubPat();
 
     if (!pat) {
-      this.logger.warn('GitHub', 'PAT required for Discussions API');
+      console.warn(`[GitHub] PAT required for Discussions API`);
       return [];
     }
 
@@ -147,7 +175,7 @@ export class GitHubService {
     `;
 
     try {
-      const response = await fetch(GITHUB_GRAPHQL, {
+      const response = await this.fetchWithRetry(GITHUB_GRAPHQL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${pat}`,
@@ -157,16 +185,12 @@ export class GitHubService {
           query,
           variables: { owner, repo, first: limit }
         })
-      });
-
-      if (!response.ok) {
-        throw new Error(`GitHub GraphQL error: ${response.status}`);
-      }
+      }, `${owner}/${repo} discussions`);
 
       const result: GitHubGraphQLResponse = await response.json();
 
       if (result.errors) {
-        this.logger.error('GitHub', 'GraphQL errors:', result.errors);
+        console.error(`[GitHub] ${owner}/${repo} discussions GraphQL errors:`, result.errors[0]?.message);
         return [];
       }
 
@@ -177,11 +201,11 @@ export class GitHubService {
         ? discussions.filter(d => new Date(d.createdAt) > since)
         : discussions;
 
-      this.logger.debug('GitHub', `Fetched ${filtered.length} discussions from ${owner}/${repo}${since ? ' (incremental)' : ''}`);
+      console.log(`[GitHub] ${owner}/${repo}: ${filtered.length} discussions`);
 
       return filtered.map(disc => this.mapDiscussionToFeedback(disc, owner, repo));
-    } catch (error) {
-      this.logger.error('GitHub', `Failed to fetch discussions from ${owner}/${repo}:`, error);
+    } catch (error: any) {
+      console.error(`[GitHub] ${owner}/${repo} discussions FAILED: ${error?.message || error}`);
       return [];
     }
   }
