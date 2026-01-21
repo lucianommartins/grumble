@@ -125,7 +125,14 @@
 
       <!-- Title (if exists) -->
       @if (item.title || item.translatedTitles) {
-      <div class="item-title">{{ getTranslatedTitle(item) }}</div>
+      <div class="item-title">
+        @if (getTranslatedTitle(item)) {
+        <span class="translated-prefix">({{ i18n.t.grumble.translatedFrom }} {{ getLanguageName(item.language) }})</span>
+        {{ getTranslatedTitle(item) }}
+        } @else {
+        {{ item.title }}
+        }
+      </div>
       }
 
       <!-- Content -->

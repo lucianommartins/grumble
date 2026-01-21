@@ -344,7 +344,13 @@ export class FeedbackService {
       this.logger.info('Feedback', `Analysis complete. ${processedCount} items processed.`);
 
       // Translate items to ALL 8 languages at sync time (including items without detected language)
-      const itemsNeedingTranslation = this.items().filter(i => !i.translations);
+      // Check for null, undefined, or empty translations object
+      const itemsNeedingTranslation = this.items().filter(i =>
+        i.translations === null ||
+        i.translations === undefined ||
+        Object.keys(i.translations).length === 0
+      );
+      this.logger.info('Feedback', `Items needing translation: ${itemsNeedingTranslation.length} of ${this.items().length}`);
 
       if (itemsNeedingTranslation.length > 0) {
         this.syncStatus.set({ step: 'translating', message: `Traduzindo 0 de ${itemsNeedingTranslation.length}...` });
@@ -355,8 +361,11 @@ export class FeedbackService {
             this.syncStatus.set({ step: 'translating', message: `Traduzindo ${current} de ${total}...` });
           }
         );
+        this.logger.info('Feedback', `Translation returned ${translations.size} of ${itemsNeedingTranslation.length} items`);
 
         if (translations.size > 0) {
+          this.logger.info('Feedback', `Updating ${translations.size} items with translations...`);
+
           this.items.update(allItems =>
             allItems.map(item => {
               const translation = translations.get(item.id);
@@ -365,16 +374,28 @@ export class FeedbackService {
                   ...item,
                   translations: translation.translations,
                   translatedTitles: translation.translatedTitles,
+                  // Use detected language if item doesn't have one
+                  language: item.language || translation.detectedLanguage || undefined,
                 };
               }
               return item;
             })
           );
 
+          const updatedItems = this.items().filter(i => i.translatedTitles);
+          this.logger.info('Feedback', `${updatedItems.length} items now have translatedTitles`);
+
           // Save translated items to Firestore for caching (all users benefit)
           const translatedItems = this.items().filter(i => i.translations);
-          await this.sharedFeedback.saveItems(translatedItems);
-          this.logger.info('Feedback', `Saved ${translations.size} items with translations to all languages`);
+          this.logger.info('Feedback', `Saving ${translatedItems.length} translated items to Firestore...`);
+          try {
+            await this.sharedFeedback.saveItems(translatedItems);
+            this.logger.info('Feedback', `Saved ${translations.size} items with translations to all languages`);
+          } catch (saveError) {
+            this.logger.error('Feedback', 'Failed to save translations to Firestore:', saveError);
+          }
+        } else {
+          this.logger.warn('Feedback', 'No translations were generated - all batches may have failed');
         }
       }
 

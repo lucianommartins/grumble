@@ -152,30 +152,32 @@ export class SentimentService {
   async translateToAllLanguages(
     items: FeedbackItem[],
     onProgress?: (current: number, total: number) => void
-  ): Promise<Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string> }>> {
-    const results = new Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string> }>();
+  ): Promise<Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string>; detectedLanguage?: string | null }>> {
+    const results = new Map<string, { translations: Record<string, string>; translatedTitles?: Record<string, string>; detectedLanguage?: string | null }>();
 
     // Only translate items that don't already have translations
     const needsTranslation = items.filter(item => 
-      item.language && !item.translations
+      !item.translations
     );
 
-    this.logger.debug('Sentiment', `Items needing translation to all languages: ${needsTranslation.length}`);
+    this.logger.info('Sentiment', `Items needing translation: ${needsTranslation.length} of ${items.length}`);
 
     if (needsTranslation.length === 0) {
+      this.logger.debug('Sentiment', 'No items need translation - returning empty');
       return results;
     }
 
     const apiKey = this.userSettings.getGeminiApiKey();
     if (!apiKey) {
+      this.logger.warn('Sentiment', 'No API key - cannot translate');
       return results;
     }
 
-    const targetLanguages = ['en', 'pt', 'es', 'fr', 'de', 'ja', 'zh'];
+    const targetLanguages = ['en', 'pt-br', 'pt-pt', 'es', 'fr', 'de', 'ja', 'zh'];
 
-    // Process in parallel batches (10 concurrent batches of 15 items = 150 items at a time)
-    // Smaller batches reduce JSON parsing errors from oversized responses
-    const batchSize = 15;
+    // Process in parallel batches (10 concurrent batches of 5 items = 50 items at a time)
+    // Smaller batches with 8 languages to prevent response truncation
+    const batchSize = 5;
     const parallelBatches = 10;
     let processedCount = 0;
     const batchGroups: FeedbackItem[][] = [];
@@ -187,63 +189,145 @@ export class SentimentService {
 
     this.logger.info('Sentiment', `Starting translation: ${batchGroups.length} batches of ${batchSize} items, ${parallelBatches} in parallel`);
 
+    // JSON Schema for guaranteed structured output (titles only)
+    const translationSchema = {
+      type: 'object',
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              itemId: { type: 'string', description: 'The original item ID' },
+              detectedLanguage: {
+                type: 'string',
+                enum: ['en', 'pt-br', 'pt-pt', 'es', 'fr', 'de', 'ja', 'zh'],
+                description: 'The detected source language code'
+              },
+              titles: {
+                type: 'object',
+                properties: {
+                  'en': { type: 'string' },
+                  'pt-br': { type: 'string' },
+                  'pt-pt': { type: 'string' },
+                  'es': { type: 'string' },
+                  'fr': { type: 'string' },
+                  'de': { type: 'string' },
+                  'ja': { type: 'string' },
+                  'zh': { type: 'string' }
+                },
+                required: ['en', 'pt-br', 'pt-pt', 'es', 'fr', 'de', 'ja', 'zh']
+              }
+            },
+            required: ['itemId', 'detectedLanguage', 'titles']
+          }
+        }
+      },
+      required: ['items']
+    };
+
+    this.logger.info('Sentiment', `Starting ${batchGroups.length} batches, ${parallelBatches} in parallel`);
+
     // Process batches in groups of 10 in parallel
     for (let g = 0; g < batchGroups.length; g += parallelBatches) {
       const parallelGroup = batchGroups.slice(g, g + parallelBatches);
+      const groupNum = Math.floor(g / parallelBatches) + 1;
+      this.logger.debug('Sentiment', `Processing group ${groupNum}: ${parallelGroup.length} batches`);
 
       const parallelResults = await Promise.allSettled(
-        parallelGroup.map(async batch => {
-          const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
-          const response = await this.callGemini(apiKey, prompt);
-          const parsed = this.tryParseJSON(response);
-          return { batch, data: parsed };
+        parallelGroup.map(async (batch, batchIdx) => {
+          const batchNum = g + batchIdx + 1;
+          this.logger.debug('Sentiment', `Batch ${batchNum}: Sending ${batch.length} items...`);
+
+          const maxRetries = 3;
+          let lastError: Error | null = null;
+
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+              const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
+              const response = await this.callGemini(apiKey, prompt, translationSchema);
+
+              this.logger.debug('Sentiment', `Batch ${batchNum}: Response (${response.length} chars)`);
+
+              // With structured output, response is guaranteed valid JSON
+              const parsed = JSON.parse(response);
+              this.logger.debug('Sentiment', `Batch ${batchNum}: Parsed ${parsed.items?.length || 0} items`);
+
+              return { batch, data: parsed };
+            } catch (error: any) {
+              lastError = error;
+              const isRetryable = error.message?.includes('503') || error.message?.includes('429') || error.message?.includes('500');
+
+              if (isRetryable && attempt < maxRetries) {
+                const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+                this.logger.warn('Sentiment', `Batch ${batchNum}: Retry ${attempt}/${maxRetries} after ${delay}ms`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+              } else {
+                this.logger.error('Sentiment', `Batch ${batchNum}: FAILED after ${attempt} attempts`, error.message);
+                throw error;
+              }
+            }
+          }
+
+          throw lastError;
         })
       );
 
       // Process results from all parallel batches
+      let batchIdx = 0;
       for (const result of parallelResults) {
-        if (result.status === 'fulfilled' && result.value.data) {
-          for (const itemTranslation of result.value.data.items || []) {
-            results.set(itemTranslation.itemId, {
-              translations: itemTranslation.translations || {},
-              translatedTitles: itemTranslation.titles || undefined,
-            });
+        const batchNum = g + batchIdx + 1;
+        batchIdx++;
+
+        if (result.status === 'fulfilled') {
+          const { data } = result.value;
+          if (data && data.items && data.items.length > 0) {
+            this.logger.debug('Sentiment', `Batch ${batchNum}: SUCCESS - ${data.items.length} translations`);
+
+            for (const itemTranslation of data.items) {
+              results.set(itemTranslation.itemId, {
+                translations: {},  // Not translating content anymore - just titles
+                translatedTitles: itemTranslation.titles || undefined,
+                detectedLanguage: itemTranslation.detectedLanguage || null,
+              });
+            }
+            processedCount += result.value.batch.length;
+          } else {
+            this.logger.warn('Sentiment', `Batch ${batchNum}: Empty response`);
+            processedCount += result.value.batch.length;
           }
-          processedCount += result.value.batch.length;
         } else {
-          const reason = result.status === 'rejected' ? result.reason : 'JSON parse failed';
-          this.logger.error('Sentiment', 'Multi-language translation batch failed:', reason);
+          this.logger.error('Sentiment', `Batch ${batchNum}: REJECTED`, result.reason);
           processedCount += batchSize;
         }
       }
 
+      this.logger.debug('Sentiment', `Group complete. Progress: ${processedCount}/${needsTranslation.length}`);
       onProgress?.(processedCount, needsTranslation.length);
-      this.logger.debug('Sentiment', `Translated ${processedCount}/${needsTranslation.length} items`);
     }
 
-    this.logger.info('Sentiment', `Translated ${results.size} items to all ${targetLanguages.length} languages`);
+    this.logger.info('Sentiment', `Translation complete: ${results.size} items to ${targetLanguages.length} languages`);
     return results;
   }
 
   private buildMultiLanguageTranslationPrompt(items: FeedbackItem[], targetLangs: string[]): string {
     const langNames: Record<string, string> = {
-      'en': 'English', 'pt': 'Portuguese', 'es': 'Spanish',
-      'fr': 'French', 'de': 'German', 'ja': 'Japanese', 'zh': 'Chinese',
+      'en': 'English', 'pt-br': 'Brazilian Portuguese', 'pt-pt': 'European Portuguese',
+      'es': 'Spanish', 'fr': 'French', 'de': 'German', 'ja': 'Japanese', 'zh': 'Chinese',
     };
 
+    // Only translate titles (not content) for speed
     const itemsText = items.map(item => `
 [ITEM] ID: ${item.id}
-SOURCE_LANG: ${item.language || 'UNKNOWN'}
-${item.title ? `TITLE: ${item.title}` : ''}
-CONTENT: ${item.content.substring(0, 400)}
+TITLE: ${item.title || item.content.substring(0, 100)}
 ---`).join('\n');
 
     const targetsList = targetLangs.map(l => `${l} (${langNames[l]})`).join(', ');
 
-    return `Translate these feedback items to ALL of these languages: ${targetsList}.
+    return `Translate these feedback item TITLES to ALL of these languages: ${targetsList}.
 
-IMPORTANT RULES:
-1. If SOURCE_LANG is UNKNOWN, auto-detect it from the content.
+RULES:
+1. Auto-detect the source language from the title text.
 2. For the detected source language, return the original text unchanged.
 3. Translate to all OTHER languages.
 
@@ -254,21 +338,22 @@ Respond in JSON:
   "items": [
     {
       "itemId": "the item ID",
-      "translations": {
-        "en": "English translation (or original if source is English)",
-        "pt": "Portuguese translation (or original if source is Portuguese)",
-        "es": "Spanish translation (or original if source is Spanish)",
-        "fr": "French translation (or original if source is French)",
-        "de": "German translation (or original if source is German)",
-        "ja": "Japanese translation (or original if source is Japanese)",
-        "zh": "Chinese translation (or original if source is Chinese)"
-      },
-      "titles": { ... same structure if title exists ... }
+      "detectedLanguage": "en|pt-br|pt-pt|es|fr|de|ja|zh",
+      "titles": {
+        "en": "English title",
+        "pt-br": "Brazilian Portuguese title",
+        "pt-pt": "European Portuguese title",
+        "es": "Spanish title",
+        "fr": "French title",
+        "de": "German title",
+        "ja": "Japanese title",
+        "zh": "Chinese title"
+      }
     }
   ]
 }
 
-Keep translations natural. Preserve technical terms.`;
+Keep translations natural. Preserve technical terms like API, SDK, Gemini, etc.`;
   }
 
   /**
@@ -354,6 +439,7 @@ Keep translations natural. Preserve technical terms.`;
           }
         }
         this.logger.warn('Sentiment', 'JSON repair failed, could not parse response');
+        this.logger.debug('Sentiment', `Failed response (first 500 chars): ${text.substring(0, 500)}`);
       }
     }
 
@@ -616,18 +702,31 @@ Items can only belong to ONE group.
 Skip items that don't fit any group.`;
   }
 
-  private async callGemini(apiKey: string, prompt: string): Promise<string> {
+  /**
+   * Call Gemini API with optional JSON schema for guaranteed structured output
+   * @param apiKey The API key
+   * @param prompt The prompt text
+   * @param jsonSchema Optional JSON schema for guaranteed structured output
+   */
+  private async callGemini(apiKey: string, prompt: string, jsonSchema?: Record<string, any>): Promise<string> {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.MODEL}:generateContent?key=${apiKey}`;
+
+    const generationConfig: Record<string, any> = {
+      responseMimeType: 'application/json',
+      temperature: 0.2,
+    };
+
+    // Add responseJsonSchema if provided for guaranteed structured output
+    if (jsonSchema) {
+      generationConfig['responseJsonSchema'] = jsonSchema;
+    }
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
-        }
+        generationConfig
       })
     });
 

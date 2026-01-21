@@ -215,14 +215,27 @@ export class FeedbackDashboardComponent {
 
   /**
    * Get translated or original title
+   * Returns null if no translation is available/needed
    */
-  getTranslatedTitle(item: FeedbackItem): string {
-    if (!item.translatedTitles) return item.title || '';
+  getTranslatedTitle(item: FeedbackItem): string | null {
+    if (!item.translatedTitles) return null;
 
-    const userLang = this.i18n.getLocale();
-    const normalizedUserLang = userLang.toLowerCase().split('-')[0];
+    const userLang = this.i18n.getLocale().toLowerCase();
+    const sourceLang = item.language?.toLowerCase() || '';
 
-    return item.translatedTitles[normalizedUserLang] || item.title || '';
+    // If user's language matches source language, no translation needed
+    if (sourceLang === userLang || sourceLang.startsWith(userLang.split('-')[0])) {
+      return null;
+    }
+
+    // Try different key formats: pt-br, pt, etc.
+    const translation =
+      item.translatedTitles[userLang] ||           // exact match: pt-br
+      item.translatedTitles[userLang.replace('_', '-')] ||  // normalize underscore
+      item.translatedTitles[userLang.split('-')[0]] ||      // base lang: pt
+      null;
+
+    return translation;
   }
 
   // ============================================================
