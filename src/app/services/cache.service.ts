@@ -157,15 +157,46 @@ export class CacheService {
         });
       }
 
-      await batch.commit();
+      await this.retryWithBackoff(() => batch.commit(), 3);
       this.logger.debug('CacheService', `Flushed ${itemsToSync.length} items to Firestore`);
     } catch (error) {
-      this.logger.error('CacheService', 'Failed to flush to Firestore:', error);
+      this.logger.error('CacheService', 'Failed to flush to Firestore after retries:', error);
       // Re-add failed items to pending queue
       this.firestoreSyncPending.push(...itemsToSync);
     } finally {
       this.firestoreSyncInProgress = false;
     }
+  }
+
+  /**
+   * Retry an async operation with exponential backoff
+   */
+  private async retryWithBackoff<T>(
+    operation: () => Promise<T>,
+    maxRetries: number = 3,
+    baseDelayMs: number = 1000
+  ): Promise<T> {
+    let lastError: Error | null = null;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        lastError = error;
+        const isRetryable = error?.code === 'unavailable' ||
+          error?.code === 'resource-exhausted' ||
+          error?.message?.includes('BloomFilter') ||
+          error?.message?.includes('INTERNAL');
+
+        if (!isRetryable || attempt === maxRetries - 1) {
+          throw error;
+        }
+
+        const delay = baseDelayMs * Math.pow(2, attempt);
+        this.logger.warn('CacheService', `Firestore error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries}):`, error?.message);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw lastError;
   }
 
   /**
@@ -355,7 +386,7 @@ export class CacheService {
           );
           batch.delete(docRef);
         }
-        await batch.commit();
+        await this.retryWithBackoff(() => batch.commit(), 3);
       } catch (error) {
         this.logger.warn('CacheService', 'Failed to clear expired from Firestore:', error);
       }
