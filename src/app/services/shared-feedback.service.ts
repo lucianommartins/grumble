@@ -62,7 +62,7 @@ export class SharedFeedbackService {
         }
 
         const delay = baseDelayMs * Math.pow(2, attempt);
-        this.logger.warn('SharedFeedback', `Firestore error, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries}):`, error?.message);
+        console.warn(`[Firestore] Retry ${attempt + 1}/${maxRetries} in ${delay}ms: ${error?.message?.substring(0, 60)}...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -85,9 +85,10 @@ export class SharedFeedbackService {
 
     try {
       await this.retryWithBackoff(() => batch.commit(), 3);
-      this.logger.info('SharedFeedback', `Saved ${items.length} items to Firestore`);
-    } catch (error) {
-      this.logger.error('SharedFeedback', 'Failed to save items after retries:', error);
+      console.log(`[Firestore] Saved ${items.length} items`);
+    } catch (error: any) {
+      const errorMsg = error?.message || String(error);
+      console.error(`[Firestore] FAILED to save ${items.length} items: ${errorMsg}`);
       throw error;
     }
   }

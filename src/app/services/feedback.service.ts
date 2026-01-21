@@ -188,13 +188,14 @@ export class FeedbackService {
       // Fetch from all enabled sources in parallel (with since dates for incremental sync)
       this.syncStatus.set({ step: 'fetching', message: 'Coletando das fontes...' });
       const promises: Promise<FeedbackItem[]>[] = [];
+      const sourceNames: string[] = [];
 
       if (enabledTypes.has('twitter-search')) {
         promises.push(this.twitterSearch.searchAllKeywords(syncState?.twitter || undefined));
+        sourceNames.push('Twitter');
       }
 
       if (enabledTypes.has('github-issue') || enabledTypes.has('github-discussion')) {
-        // Use the later of issues/discussions sync dates
         const githubSince = syncState
           ? new Date(Math.min(
             syncState.githubIssues?.getTime() || 0,
@@ -202,21 +203,36 @@ export class FeedbackService {
           ))
           : undefined;
         promises.push(this.github.fetchAllRepos(githubSince?.getTime() ? githubSince : undefined));
+        sourceNames.push('GitHub');
       }
 
       if (enabledTypes.has('discourse')) {
-        promises.push(this.discourse.fetchAllForums(false, syncState?.discourse || undefined)); // Skip replies for initial sync
+        promises.push(this.discourse.fetchAllForums(false, syncState?.discourse || undefined));
+        sourceNames.push('Discourse');
       }
+
+      console.log(`[Sync] Fetching from ${sourceNames.length} sources: ${sourceNames.join(', ')}`);
 
       const results = await Promise.allSettled(promises);
 
-      for (const result of results) {
+      let successSources = 0;
+      let failedSources = 0;
+
+      for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const sourceName = sourceNames[i];
         if (result.status === 'fulfilled') {
           allItems.push(...result.value);
+          console.log(`[Sync] ${sourceName}: ${result.value.length} items`);
+          successSources++;
         } else {
-          this.logger.error('Feedback', 'Source sync failed:', result.reason);
+          const reason = result.reason?.message || String(result.reason);
+          console.error(`[Sync] ${sourceName} FAILED: ${reason}`);
+          failedSources++;
         }
       }
+
+      console.log(`[Sync] Fetch complete: ${successSources} OK, ${failedSources} failed | Total: ${allItems.length} items`);
 
       // Deduplicate by ID
       const uniqueItems = this.deduplicateItems(allItems);
@@ -244,13 +260,15 @@ export class FeedbackService {
       this.items.set(mergedItems);
       this.lastSyncAt.set(new Date());
 
-      this.logger.info('Feedback', `Sync complete. ${mergedItems.length} items loaded.`);
+      console.log(`[Sync] Merged: ${mergedItems.length} unique items`);
 
       // Auto-analyze only NEW items that haven't been analyzed yet
       const unanalyzedItems = mergedItems.filter(i => !i.analyzed && !analyzedIds.has(i.id));
       if (unanalyzedItems.length > 0) {
-        this.logger.info('Feedback', `Auto-analyzing ${unanalyzedItems.length} new items...`);
+        console.log(`[Sync] ${unanalyzedItems.length} new items to analyze`);
         await this.analyzeAndGroup(unanalyzedItems);
+      } else {
+        console.log(`[Sync] All items already analyzed`);
       }
     } finally {
       this.isLoading.set(false);
@@ -267,6 +285,10 @@ export class FeedbackService {
 
     this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento 0 de ${items.length}...` });
 
+    // Metrics
+    let successBatches = 0;
+    let failedBatches = 0;
+
     try {
       // Process in parallel batches (10 concurrent batches of 100 items = 1000 items at a time)
       const parallelBatches = 10;
@@ -277,39 +299,38 @@ export class FeedbackService {
         batchGroups.push(items.slice(i, i + batchSize));
       }
 
-      this.logger.info('Feedback', `Starting analysis: ${batchGroups.length} batches of ${batchSize} items, ${parallelBatches} in parallel`);
+      console.log(`[Sentiment] Starting: ${batchGroups.length} batches, ${parallelBatches} parallel`);
+
+      const totalGroups = Math.ceil(batchGroups.length / parallelBatches);
 
       // Process batches in groups of 10 in parallel
       for (let g = 0; g < batchGroups.length; g += parallelBatches) {
         const parallelGroup = batchGroups.slice(g, g + parallelBatches);
-        const groupStartIndex = g;
-        this.logger.info('Feedback', `[Group ${Math.floor(g / parallelBatches) + 1}] Starting ${parallelGroup.length} batches in parallel...`);
+        const groupNum = Math.floor(g / parallelBatches) + 1;
+        console.log(`[Sentiment] Group ${groupNum}/${totalGroups}: Processing ${parallelGroup.length} batches...`);
 
-        // Track progress with atomic counter
-        let groupProcessed = 0;
+        let groupSuccess = 0;
+        let groupFailed = 0;
 
         // Each promise updates progress immediately when it completes
         const wrappedPromises = parallelGroup.map(async (batch, batchIndex) => {
-          const batchNum = groupStartIndex + batchIndex + 1;
-          this.logger.debug('Feedback', `[Batch ${batchNum}] Sending ${batch.length} items to Gemini...`);
+          const batchNum = g + batchIndex + 1;
 
           let results: Map<string, any>;
           let success = true;
 
           try {
             results = await this.sentiment.analyzeBatchDirect(batch);
-            this.logger.debug('Feedback', `[Batch ${batchNum}] Received ${results.size} results`);
-          } catch (error) {
-            this.logger.error('Feedback', `[Batch ${batchNum}] Failed:`, error);
+          } catch (error: any) {
+            const errorMsg = error?.message || String(error);
+            console.error(`[Sentiment] Batch ${batchNum} FAILED: ${errorMsg}`);
             results = new Map();
             success = false;
           }
 
           // Update progress IMMEDIATELY when this batch completes
-          groupProcessed++;
           processedCount += batch.length;
           this.syncStatus.set({ step: 'analyzing', message: `Analisando sentimento ${processedCount} de ${items.length}...` });
-          this.logger.debug('Feedback', `Progress: ${processedCount}/${items.length} items analyzed`);
 
           return { success, results, batch };
         });
@@ -320,6 +341,7 @@ export class FeedbackService {
         // Process results (update items, save to Firestore)
         for (const result of allResults) {
           if (result.success) {
+            groupSuccess++;
             const updatedBatchItems: FeedbackItem[] = [];
 
             this.items.update(allItems =>
@@ -345,13 +367,17 @@ export class FeedbackService {
               await this.sharedFeedback.saveItems(updatedBatchItems);
               analyzedInThisSession.push(...updatedBatchItems);
             }
+          } else {
+            groupFailed++;
           }
         }
 
-        this.logger.info('Feedback', `[Group ${Math.floor(g / parallelBatches) + 1}] Complete. Total: ${processedCount}/${items.length}`);
+        successBatches += groupSuccess;
+        failedBatches += groupFailed;
+        console.log(`[Sentiment] Group ${groupNum} complete: ${groupSuccess} OK, ${groupFailed} failed | Progress: ${processedCount}/${items.length}`);
       }
 
-      this.logger.info('Feedback', `Analysis complete. ${processedCount} items processed.`);
+      console.log(`[Sentiment] COMPLETE: ${processedCount} items | Batches: ${successBatches} OK, ${failedBatches} failed`);
 
       // Translate items to ALL 8 languages at sync time (including items without detected language)
       // Check for null, undefined, or empty translations object

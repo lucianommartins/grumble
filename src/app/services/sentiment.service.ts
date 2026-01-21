@@ -176,7 +176,6 @@ export class SentimentService {
     const targetLanguages = ['en', 'pt-br', 'pt-pt', 'es', 'fr', 'de', 'ja', 'zh'];
 
     // Process in parallel batches (10 concurrent batches of 5 items = 50 items at a time)
-    // Smaller batches with 8 languages to prevent response truncation
     const batchSize = 5;
     const parallelBatches = 10;
     let processedCount = 0;
@@ -226,18 +225,22 @@ export class SentimentService {
       required: ['items']
     };
 
-    this.logger.info('Sentiment', `Starting ${batchGroups.length} batches, ${parallelBatches} in parallel`);
+    console.log(`[Translation] Starting: ${batchGroups.length} batches, ${parallelBatches} parallel`);
+
+    // Metrics
+    let successBatches = 0;
+    let failedBatches = 0;
 
     // Process batches in groups of 10 in parallel
     for (let g = 0; g < batchGroups.length; g += parallelBatches) {
       const parallelGroup = batchGroups.slice(g, g + parallelBatches);
       const groupNum = Math.floor(g / parallelBatches) + 1;
-      this.logger.debug('Sentiment', `Processing group ${groupNum}: ${parallelGroup.length} batches`);
+      const totalGroups = Math.ceil(batchGroups.length / parallelBatches);
+      console.log(`[Translation] Group ${groupNum}/${totalGroups}: Processing ${parallelGroup.length} batches...`);
 
       const parallelResults = await Promise.allSettled(
         parallelGroup.map(async (batch, batchIdx) => {
           const batchNum = g + batchIdx + 1;
-          this.logger.debug('Sentiment', `Batch ${batchNum}: Sending ${batch.length} items...`);
 
           const maxRetries = 3;
           let lastError: Error | null = null;
@@ -247,23 +250,21 @@ export class SentimentService {
               const prompt = this.buildMultiLanguageTranslationPrompt(batch, targetLanguages);
               const response = await this.callGemini(apiKey, prompt, translationSchema);
 
-              this.logger.debug('Sentiment', `Batch ${batchNum}: Response (${response.length} chars)`);
-
               // With structured output, response is guaranteed valid JSON
               const parsed = JSON.parse(response);
-              this.logger.debug('Sentiment', `Batch ${batchNum}: Parsed ${parsed.items?.length || 0} items`);
 
               return { batch, data: parsed };
             } catch (error: any) {
               lastError = error;
-              const isRetryable = error.message?.includes('503') || error.message?.includes('429') || error.message?.includes('500');
+              const errorMsg = error.message || String(error);
+              const isRetryable = errorMsg.includes('503') || errorMsg.includes('429') || errorMsg.includes('500');
 
               if (isRetryable && attempt < maxRetries) {
-                const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
-                this.logger.warn('Sentiment', `Batch ${batchNum}: Retry ${attempt}/${maxRetries} after ${delay}ms`);
+                const delay = Math.pow(2, attempt - 1) * 1000;
+                console.warn(`[Translation] Batch ${batchNum}: Retry ${attempt}/${maxRetries} (${errorMsg.substring(0, 50)}...)`);
                 await new Promise(resolve => setTimeout(resolve, delay));
               } else {
-                this.logger.error('Sentiment', `Batch ${batchNum}: FAILED after ${attempt} attempts`, error.message);
+                console.error(`[Translation] Batch ${batchNum} FAILED: ${errorMsg}`);
                 throw error;
               }
             }
@@ -273,7 +274,10 @@ export class SentimentService {
         })
       );
 
-      // Process results from all parallel batches
+      // Process results and track metrics
+      let groupSuccess = 0;
+      let groupFailed = 0;
+
       let batchIdx = 0;
       for (const result of parallelResults) {
         const batchNum = g + batchIdx + 1;
@@ -282,31 +286,35 @@ export class SentimentService {
         if (result.status === 'fulfilled') {
           const { data } = result.value;
           if (data && data.items && data.items.length > 0) {
-            this.logger.debug('Sentiment', `Batch ${batchNum}: SUCCESS - ${data.items.length} translations`);
-
             for (const itemTranslation of data.items) {
               results.set(itemTranslation.itemId, {
-                translations: {},  // Not translating content anymore - just titles
+                translations: {},
                 translatedTitles: itemTranslation.titles || undefined,
                 detectedLanguage: itemTranslation.detectedLanguage || null,
               });
             }
             processedCount += result.value.batch.length;
+            groupSuccess++;
           } else {
-            this.logger.warn('Sentiment', `Batch ${batchNum}: Empty response`);
+            console.warn(`[Translation] Batch ${batchNum}: Empty response`);
             processedCount += result.value.batch.length;
+            groupFailed++;
           }
         } else {
-          this.logger.error('Sentiment', `Batch ${batchNum}: REJECTED`, result.reason);
+          const reason = result.reason?.message || String(result.reason);
+          console.error(`[Translation] Batch ${batchNum} REJECTED: ${reason}`);
           processedCount += batchSize;
+          groupFailed++;
         }
       }
 
-      this.logger.debug('Sentiment', `Group complete. Progress: ${processedCount}/${needsTranslation.length}`);
+      successBatches += groupSuccess;
+      failedBatches += groupFailed;
+      console.log(`[Translation] Group ${groupNum} complete: ${groupSuccess} OK, ${groupFailed} failed | Progress: ${processedCount}/${needsTranslation.length}`);
       onProgress?.(processedCount, needsTranslation.length);
     }
 
-    this.logger.info('Sentiment', `Translation complete: ${results.size} items to ${targetLanguages.length} languages`);
+    console.log(`[Translation] COMPLETE: ${results.size} items translated | Batches: ${successBatches} OK, ${failedBatches} failed`);
     return results;
   }
 
