@@ -342,7 +342,7 @@
 }
 
 .grumble-sidebar {
-  width: 280px;
+  width: 448px;
   flex-shrink: 0;
   border-right: none;
   overflow-y: auto;

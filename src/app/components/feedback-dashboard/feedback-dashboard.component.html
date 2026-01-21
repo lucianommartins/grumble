@@ -68,9 +68,6 @@
       <!-- Actions -->
       <div class="actions">
         @if (selectedCount() > 0) {
-        <button class="action-btn analyze" (click)="analyzeSelected()" [disabled]="isAnalyzing()">
-          {{ isAnalyzing() ? '⏳ ' + i18n.t.grumble.analyzing : '🧠 ' + i18n.t.grumble.analyze + ' (' + selectedCount() + ')' }}
-        </button>
         <!-- Admin Only: Delete Selected -->
         @if (isAdmin) {
         <button class="action-btn delete" (click)="deleteSelectedFromCache()" [disabled]="isDeleting()">

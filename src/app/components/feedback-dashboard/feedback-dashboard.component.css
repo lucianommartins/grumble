@@ -186,11 +186,17 @@
 }
 
 .sort-select option {
-  background: var(--card-bg);
-  color: var(--text-primary);
+  background: #1f2937;
+    color: #ffffff;
   padding: 0.5rem;
 }
 
+/* Light mode dropdown options */
+:host-context([data-theme="light"]) .sort-select option,
+.sort-select option {
+  background: #1f2937;
+  color: #ffffff;
+}
 .sort-select:focus {
   outline: none;
   border-color: var(--primary-color);

@@ -26,11 +26,11 @@ export class App {
   showSettings = signal(false);
 
   // Resizable sidebar
-  sidebarWidth = signal(280);
+  sidebarWidth = signal(448);
   private isResizing = false;
   private readonly minWidth = 200;
-  private readonly maxWidth = 450;
-  private readonly defaultWidth = 280;
+  private readonly maxWidth = 600;
+  private readonly defaultWidth = 448;
   private hasLoadedCache = false;
 
   constructor() {
