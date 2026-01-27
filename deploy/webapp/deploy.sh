@@ -97,7 +97,7 @@ echo "📦 Image tag: ${TAG}"
 echo "🔐 Firebase Project: ${FIREBASE_PROJECT_ID}"
 
 gcloud builds submit \
-    --config=deploy/cloudrun/cloudbuild.yaml \
+    --config=deploy/webapp/cloudbuild.yaml \
     --substitutions=_SERVICE_NAME=${SERVICE_NAME},_REGION=${REGION},_TAG=${TAG},_APP_SECRET="${APP_SECRET}",_FIREBASE_API_KEY="${FIREBASE_API_KEY}",_FIREBASE_AUTH_DOMAIN="${FIREBASE_AUTH_DOMAIN}",_FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID}",_FIREBASE_STORAGE_BUCKET="${FIREBASE_STORAGE_BUCKET}",_FIREBASE_MESSAGING_SENDER_ID="${FIREBASE_MESSAGING_SENDER_ID}",_FIREBASE_APP_ID="${FIREBASE_APP_ID}" \
     .
 

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { FeedbackItem, DiscourseConfig, DEFAULT_DISCOURSE } from '../models/feedback.model';
+import { FeedbackItem, DiscourseConfig } from '../models/feedback.model';
 import { LoggerService } from './logger.service';
+import { SourceConfigService } from './source-config.service';
 
 interface DiscourseTopic {
   id: number;
@@ -55,21 +56,13 @@ const CORS_PROXY = 'https://corsproxy.io/?';
 })
 export class DiscourseService {
   private logger = inject(LoggerService);
+  private sourceConfig = inject(SourceConfigService);
 
-  // Configuration
-  configs = signal<DiscourseConfig[]>([]);
+  // Configuration - linked to SourceConfigService
+  configs = this.sourceConfig.discourseForums;
 
   constructor() {
-    this.initializeDefaultConfigs();
-  }
-
-  private initializeDefaultConfigs(): void {
-    const defaultConfigs: DiscourseConfig[] = DEFAULT_DISCOURSE.map((config, index) => ({
-      ...config,
-      id: `discourse-${index}`,
-      createdAt: new Date()
-    }));
-    this.configs.set(defaultConfigs);
+    // Configs are loaded from Firestore via SourceConfigService
   }
 
   /**
@@ -277,7 +270,8 @@ export class DiscourseService {
       categories: 'all',
       createdAt: new Date(),
     };
-    this.configs.update(configs => [...configs, config]);
+    const updated = [...this.configs(), config];
+    this.sourceConfig.saveDiscourseForums(updated);
     return config;
   }
 
@@ -285,15 +279,15 @@ export class DiscourseService {
    * Remove a forum from monitoring
    */
   removeForum(id: string): void {
-    this.configs.update(configs => configs.filter(c => c.id !== id));
+    const updated = this.configs().filter(c => c.id !== id);
+    this.sourceConfig.saveDiscourseForums(updated);
   }
 
   /**
    * Toggle forum enabled state
    */
   toggleForum(id: string): void {
-    this.configs.update(configs =>
-      configs.map(c => c.id === id ? { ...c, enabled: !c.enabled } : c)
-    );
+    const updated = this.configs().map(c => c.id === id ? { ...c, enabled: !c.enabled } : c);
+    this.sourceConfig.saveDiscourseForums(updated);
   }
 }

@@ -1,8 +1,9 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { FeedbackItem, SearchKeyword, DEFAULT_KEYWORDS } from '../models/feedback.model';
+import { Injectable, inject, signal, effect } from '@angular/core';
+import { FeedbackItem, SearchKeyword } from '../models/feedback.model';
 import { UserSettingsService } from './user-settings.service';
 import { LoggerService } from './logger.service';
 import { I18nService } from '../i18n';
+import { SourceConfigService } from './source-config.service';
 
 interface TwitterSearchResult {
   id: string;
@@ -62,21 +63,13 @@ export class TwitterSearchService {
   private userSettings = inject(UserSettingsService);
   private logger = inject(LoggerService);
   private i18n = inject(I18nService);
+  private sourceConfig = inject(SourceConfigService);
 
-  // Configuration
-  keywords = signal<SearchKeyword[]>([]);
+  // Configuration - linked to SourceConfigService
+  keywords = this.sourceConfig.twitterKeywords;
 
   constructor() {
-    this.initializeDefaultKeywords();
-  }
-
-  private initializeDefaultKeywords(): void {
-    const defaultConfigs: SearchKeyword[] = DEFAULT_KEYWORDS.map((kw, index) => ({
-      ...kw,
-      id: `keyword-${index}`,
-      createdAt: new Date()
-    }));
-    this.keywords.set(defaultConfigs);
+    // Keywords are loaded from Firestore via SourceConfigService
   }
 
   /**
@@ -272,7 +265,8 @@ export class TwitterSearchService {
       languages: 'all',
       createdAt: new Date(),
     };
-    this.keywords.update(keywords => [...keywords, keyword]);
+    const updated = [...this.keywords(), keyword];
+    this.sourceConfig.saveTwitterKeywords(updated);
     return keyword;
   }
 
@@ -280,24 +274,23 @@ export class TwitterSearchService {
    * Remove a keyword from monitoring
    */
   removeKeyword(id: string): void {
-    this.keywords.update(keywords => keywords.filter(k => k.id !== id));
+    const updated = this.keywords().filter(k => k.id !== id);
+    this.sourceConfig.saveTwitterKeywords(updated);
   }
 
   /**
    * Toggle keyword enabled state
    */
   toggleKeyword(id: string): void {
-    this.keywords.update(keywords =>
-      keywords.map(k => k.id === id ? { ...k, enabled: !k.enabled } : k)
-    );
+    const updated = this.keywords().map(k => k.id === id ? { ...k, enabled: !k.enabled } : k);
+    this.sourceConfig.saveTwitterKeywords(updated);
   }
 
   /**
    * Update keyword languages
    */
   updateKeywordLanguages(id: string, languages: string[] | 'all'): void {
-    this.keywords.update(keywords =>
-      keywords.map(k => k.id === id ? { ...k, languages } : k)
-    );
+    const updated = this.keywords().map(k => k.id === id ? { ...k, languages } : k);
+    this.sourceConfig.saveTwitterKeywords(updated);
   }
 }

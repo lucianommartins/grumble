@@ -475,6 +475,29 @@
   flex: 1;
 }
 
+.form-error {
+  font-size: var(--font-size-xs);
+  color: #ef4444;
+  padding: var(--spacing-xs);
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: var(--radius-sm);
+}
+
+.spinner-small {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 /* Detected Type Badge */
 .detected-type {
   display: flex;

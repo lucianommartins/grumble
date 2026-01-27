@@ -27,14 +27,33 @@ export class SidebarComponent {
   @Output() openSettings = new EventEmitter<void>();
 
   showAddKeyword = signal(false);
+  showAddRepo = signal(false);
   newKeyword = '';
+  newRepoUrl = '';
+  repoError = signal<string | null>(null);
+  isValidatingRepo = signal(false);
   selectedGroup = signal<string | null>(null);
   selectedGroupSentiment = signal<Sentiment | null>(null);
 
-  // Groups filtered by sentiment and sorted by item count (descending)
+  // Admin check for showing add buttons
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
+  }
+
+  // Groups filtered by sentiment, with itemCount recalculated based on available items
   filteredSortedGroups = computed(() => {
     const sentiment = this.selectedGroupSentiment();
-    let groups = [...this.feedbackService.groups()];
+    const allItems = this.feedbackService.items();
+    const itemIds = new Set(allItems.map(i => i.id));
+
+    // Recalculate itemCount based on items that actually exist
+    let groups = this.feedbackService.groups().map(g => {
+      const visibleCount = (g.itemIds || []).filter(id => itemIds.has(id)).length;
+      return { ...g, itemCount: visibleCount };
+    });
+
+    // Filter out groups with no visible items
+    groups = groups.filter(g => g.itemCount > 0);
 
     if (sentiment) {
       groups = groups.filter(g => g.sentiment === sentiment);
@@ -74,6 +93,64 @@ export class SidebarComponent {
     this.twitterService.addKeyword(this.newKeyword.trim());
     this.newKeyword = '';
     this.showAddKeyword.set(false);
+  }
+
+  /**
+   * Add a GitHub repo from URL
+   * Accepts formats: https://github.com/owner/repo or owner/repo
+   */
+  async addRepo(): Promise<void> {
+    const url = this.newRepoUrl.trim();
+    if (!url) return;
+
+    // Parse owner/repo from URL
+    let owner = '';
+    let repo = '';
+
+    // Try URL format first
+    const urlMatch = url.match(/github\.com\/([^\/]+)\/([^\/]+)/i);
+    if (urlMatch) {
+      owner = urlMatch[1];
+      repo = urlMatch[2].replace(/\.git$/, '');
+    } else {
+      // Try owner/repo format
+      const slashMatch = url.match(/^([^\/]+)\/([^\/]+)$/);
+      if (slashMatch) {
+        owner = slashMatch[1];
+        repo = slashMatch[2];
+      }
+    }
+
+    if (!owner || !repo) {
+      this.repoError.set('Invalid format. Use https://github.com/owner/repo or owner/repo');
+      return;
+    }
+
+    // Validate repo exists via GitHub API
+    this.isValidatingRepo.set(true);
+    this.repoError.set(null);
+
+    try {
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          this.repoError.set(`Repository ${owner}/${repo} not found`);
+        } else {
+          this.repoError.set(`Failed to validate: ${response.statusText}`);
+        }
+        return;
+      }
+
+      // Repo exists, add it
+      this.githubService.addRepo(owner, repo);
+      this.newRepoUrl = '';
+      this.showAddRepo.set(false);
+      this.repoError.set(null);
+    } catch (error) {
+      this.repoError.set('Network error. Please try again.');
+    } finally {
+      this.isValidatingRepo.set(false);
+    }
   }
 
   filterByGroup(groupId: string): void {

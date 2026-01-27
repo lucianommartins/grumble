@@ -8,6 +8,7 @@ import { SharedFeedbackService } from './shared-feedback.service';
 import { CacheService } from './cache.service';
 import { LoggerService } from './logger.service';
 import { I18nService } from '../i18n';
+import { SourceConfigService } from './source-config.service';
 
 /**
  * FeedbackService orchestrates fetching from all sources
@@ -25,6 +26,7 @@ export class FeedbackService {
   private cache = inject(CacheService);
   private logger = inject(LoggerService);
   private i18n = inject(I18nService);
+  private sourceConfig = inject(SourceConfigService);
 
   // State
   items = signal<FeedbackItem[]>([]);
@@ -162,6 +164,9 @@ export class FeedbackService {
     this.logger.info('Feedback', 'Starting sync from all sources...');
 
     try {
+      // Load source configs from Firestore (Twitter keywords, GitHub repos, Discourse forums)
+      await this.sourceConfig.loadConfigs();
+
       // First, load already analyzed items from Firebase (shared)
       const existingItems = await this.sharedFeedback.loadItems();
       const existingGroups = await this.sharedFeedback.loadGroups();

@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { FeedbackItem, GitHubRepoConfig, DEFAULT_GITHUB_REPOS } from '../models/feedback.model';
+import { FeedbackItem, GitHubRepoConfig } from '../models/feedback.model';
 import { UserSettingsService } from './user-settings.service';
 import { LoggerService } from './logger.service';
+import { SourceConfigService } from './source-config.service';
 
 interface GitHubIssue {
   id: number;
@@ -51,21 +52,13 @@ const GITHUB_GRAPHQL = 'https://api.github.com/graphql';
 export class GitHubService {
   private userSettings = inject(UserSettingsService);
   private logger = inject(LoggerService);
+  private sourceConfig = inject(SourceConfigService);
 
-  // Configuration
-  repos = signal<GitHubRepoConfig[]>([]);
+  // Configuration - linked to SourceConfigService
+  repos = this.sourceConfig.githubRepos;
 
   constructor() {
-    this.initializeDefaultRepos();
-  }
-
-  private initializeDefaultRepos(): void {
-    const defaultConfigs: GitHubRepoConfig[] = DEFAULT_GITHUB_REPOS.map((repo) => ({
-      ...repo,
-      id: `github-${repo.owner}-${repo.repo}`,
-      createdAt: new Date()
-    }));
-    this.repos.set(defaultConfigs);
+    // Repos are loaded from Firestore via SourceConfigService
   }
 
   /**
@@ -293,7 +286,8 @@ export class GitHubService {
       includeDiscussions: true,
       createdAt: new Date(),
     };
-    this.repos.update(repos => [...repos, config]);
+    const updated = [...this.repos(), config];
+    this.sourceConfig.saveGitHubRepos(updated);
     return config;
   }
 
@@ -301,15 +295,15 @@ export class GitHubService {
    * Remove a repository from monitoring
    */
   removeRepo(id: string): void {
-    this.repos.update(repos => repos.filter(r => r.id !== id));
+    const updated = this.repos().filter(r => r.id !== id);
+    this.sourceConfig.saveGitHubRepos(updated);
   }
 
   /**
    * Toggle repository enabled state
    */
   toggleRepo(id: string): void {
-    this.repos.update(repos =>
-      repos.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r)
-    );
+    const updated = this.repos().map(r => r.id === id ? { ...r, enabled: !r.enabled } : r);
+    this.sourceConfig.saveGitHubRepos(updated);
   }
 }

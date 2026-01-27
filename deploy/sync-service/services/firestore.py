@@ -10,10 +10,10 @@ class FirestoreService:
     """Service for interacting with Firestore."""
     
     def __init__(self):
-        self.db = firestore.Client()
-        self.config_collection = "grumble-config"
-        self.feedback_collection = "grumble-feedback"
-        self.groups_collection = "grumble-groups"
+        self.db = firestore.Client(database="grumble")
+        self.config_collection = "config"
+        self.feedback_collection = "feedback_items"
+        self.groups_collection = "feedback_groups"
     
     def get_last_sync_time(self) -> datetime | None:
         """Get the timestamp of the last successful sync."""

@@ -68,6 +68,8 @@ if ! gcloud iam service-accounts describe $SCHEDULER_SA --project=$PROJECT_ID &>
     gcloud iam service-accounts create grumble-scheduler \
         --display-name="Grumble Scheduler SA" \
         --project=$PROJECT_ID
+    echo "   Waiting for service account to propagate..."
+    sleep 10
 fi
 
 # Grant invoker role
@@ -107,4 +109,5 @@ echo "🎉 All done!"
 echo "   Service: $SERVICE_URL"
 echo "   Scheduler: Every 30 minutes"
 echo ""
-echo "Test with: curl -X GET ${SERVICE_URL}/health"
+echo "Test with:"
+echo "  curl -H \"Authorization: Bearer \$(gcloud auth print-identity-token)\" ${SERVICE_URL}/health"

@@ -31,9 +31,11 @@
   <section class="sidebar-section">
     <div class="section-header">
       <h3 class="section-title">🔍 {{ i18n.t.grumble.keywords }}</h3>
+      @if (isAdmin) {
       <button class="btn-add" (click)="showAddKeyword.set(true)" title="Add keyword">
         <span>+</span>
       </button>
+      }
     </div>
 
     @if (showAddKeyword()) {
@@ -54,7 +56,9 @@
         <button class="item-toggle" [class.active]="keyword.enabled" (click)="twitterService.toggleKeyword(keyword.id)">
           <span class="toggle-dot"></span>
         </button>
+        @if (isAdmin) {
         <button class="btn-delete" (click)="twitterService.removeKeyword(keyword.id)">×</button>
+        }
       </div>
       }
     </div>
@@ -64,7 +68,33 @@
     <section class="sidebar-section">
       <div class="section-header">
         <h3 class="section-title">🐙 {{ i18n.t.grumble.githubRepos }}</h3>
+        @if (isAdmin) {
+        <button class="btn-add" (click)="showAddRepo.set(true)" title="Add repository">
+          <span>+</span>
+        </button>
+        }
+        </div>
+        
+        @if (showAddRepo()) {
+        <div class="add-form animate-fadeIn">
+          <input type="text" class="input" placeholder="https://github.com/owner/repo" [(ngModel)]="newRepoUrl"
+            [disabled]="isValidatingRepo()" />
+          @if (repoError()) {
+          <div class="form-error">{{ repoError() }}</div>
+          }
+          <div class="form-actions">
+            <button class="btn btn-secondary" (click)="showAddRepo.set(false); repoError.set(null)"
+              [disabled]="isValidatingRepo()">Cancel</button>
+            <button class="btn btn-primary" (click)="addRepo()" [disabled]="isValidatingRepo()">
+              @if (isValidatingRepo()) {
+              <span class="spinner-small"></span>
+              } @else {
+              Add
+              }
+            </button>
+          </div>
       </div>
+      }
     
       <div class="items-list">
         @for (repo of githubService.repos(); track repo.id) {
@@ -74,6 +104,9 @@
           <button class="item-toggle" [class.active]="repo.enabled" (click)="githubService.toggleRepo(repo.id)">
           <span class="toggle-dot"></span>
         </button>
+        @if (isAdmin) {
+        <button class="btn-delete" (click)="githubService.removeRepo(repo.id)">×</button>
+        }
       </div>
       }</div>
       </section>
